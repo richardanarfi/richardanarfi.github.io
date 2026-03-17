@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Richard Anarfi | LLM Systems, Evaluation, and Agent Reliability</title>
+  <meta name="description" content="Portfolio of Richard Anarfi: LLM systems, evaluation, synthetic data, and agent reliability." />
+  <link rel="stylesheet" href="assets/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav-wrap">
+      <a class="brand" href="index.html">Richard Anarfi</a>
+      <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false">Menu</button>
+      <nav class="site-nav">
+        <a href="#projects">Projects</a>
+        <a href="#writing">Writing</a>
+        <a href="#about">About</a>
+        <a href="resume.pdf">Resume</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <span class="pill">LLM systems • evaluation • agent reliability</span>
+          <h1>Building measured, reliable LLM systems for complex tasks.</h1>
+          <p class="lead">
+            I work on evaluation frameworks, synthetic data, prompt experimentation, and agent-style workflows.
+            This site is a clean public home for portfolio projects, technical writing, and research-facing work.
+          </p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="#projects">View projects</a>
+            <a class="button" href="resume.pdf">Download resume</a>
+          </div>
+
+          <div class="hero-metrics">
+            <div class="metric-card">
+              <div class="metric-label">Focus</div>
+              <div class="metric-value">Evaluation-first LLM systems</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Themes</div>
+              <div class="metric-value">Benchmarks, synthetic data, prompting, agent workflows</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Best fit</div>
+              <div class="metric-value">Research engineering for agent reliability and measurement</div>
+            </div>
+          </div>
+        </div>
+
+        <aside class="hero-panel">
+          <div class="hero-panel-card">
+            <h2>Quick links</h2>
+            <ul class="link-list">
+              <li><a href="#">GitHub</a></li>
+              <li><a href="#">LinkedIn</a></li>
+              <li><a href="#">Google Scholar</a></li>
+              <li><a href="mailto:your-email@example.com">your-email@example.com</a></li>
+            </ul>
+          </div>
+
+          <div class="hero-panel-card soft">
+            <h2>What to replace first</h2>
+            <ol class="small-list">
+              <li>Upload your real <strong>resume.pdf</strong></li>
+              <li>Replace the placeholder links above</li>
+              <li>Add screenshots into the <strong>images</strong> folder</li>
+              <li>Edit the project summaries</li>
+            </ol>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="section" id="projects">
+      <div class="container">
+        <div class="section-heading">
+          <span class="section-kicker">Featured work</span>
+          <h2>Projects aligned to LLM systems and agent evaluation</h2>
+          <p>
+            The homepage stays simple. Each project has its own page, so you can grow the site without cluttering this section.
+          </p>
+        </div>
+
+        <div class="project-stack">
+          <article class="project-card">
+            <div class="project-copy">
+              <span class="project-tag">Flagship benchmark project</span>
+              <h3>AgentEval</h3>
+              <p>
+                A benchmark harness for tool-using LLM systems, focused on task success, tool selection accuracy,
+                failure recovery, and robustness across prompts and models.
+              </p>
+              <ul>
+                <li>Benchmark tasks for retrieval, structured extraction, tool use, and recovery behavior</li>
+                <li>Comparable runs across models and prompt variants</li>
+                <li>Failure analysis and metrics reporting</li>
+              </ul>
+              <a class="text-link" href="projects/agenteval.html">Open project page</a>
+            </div>
+            <div class="project-visual">
+              <img src="images/agenteval-card.svg" alt="Abstract AgentEval cover graphic" />
+            </div>
+          </article>
+
+          <article class="project-card">
+            <div class="project-copy">
+              <span class="project-tag">Synthetic data and validation</span>
+              <h3>SynthBench</h3>
+              <p>
+                A pipeline for generating synthetic agent tasks, alternate-valid answers, and evaluation rubrics,
+                with checks for whether synthetic data is actually useful.
+              </p>
+              <ul>
+                <li>Human seed set plus synthetic expansion</li>
+                <li>Rubric generation and alternate-answer support</li>
+                <li>Validation against human-authored tasks</li>
+              </ul>
+              <a class="text-link" href="projects/synthbench.html">Open project page</a>
+            </div>
+            <div class="project-visual">
+              <img src="images/synthbench-card.svg" alt="Abstract SynthBench cover graphic" />
+            </div>
+          </article>
+
+          <article class="project-card">
+            <div class="project-copy">
+              <span class="project-tag">Prompt orchestration and evaluation</span>
+              <h3>ResearchFlow</h3>
+              <p>
+                A research assistant workflow that decomposes questions, retrieves evidence, drafts answers,
+                critiques them, and revises under an explicit rubric.
+              </p>
+              <ul>
+                <li>Prompt-orchestrated workflow</li>
+                <li>Evidence-backed answer generation</li>
+                <li>Evaluation on faithfulness and completeness</li>
+              </ul>
+              <a class="text-link" href="projects/researchflow.html">Open project page</a>
+            </div>
+            <div class="project-visual">
+              <img src="images/researchflow-card.svg" alt="Abstract ResearchFlow cover graphic" />
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section alt" id="writing">
+      <div class="container">
+        <div class="section-heading">
+          <span class="section-kicker">Writing</span>
+          <h2>Technical essays</h2>
+          <p>These are separate pages too, so adding more later is straightforward.</p>
+        </div>
+
+        <div class="essay-grid">
+          <article class="essay-card">
+            <h3>Why exact-match metrics fail for LLM systems</h3>
+            <p>Alternate-valid answers, rubric-based evaluation, and why naive exact matching breaks for realistic tasks.</p>
+            <a class="text-link" href="writing/exact-match.html">Read page</a>
+          </article>
+
+          <article class="essay-card">
+            <h3>How to evaluate tool-using agents beyond pass/fail</h3>
+            <p>Tool choice, recovery behavior, hallucination rates, and why agent evaluation should separate process from outcome.</p>
+            <a class="text-link" href="writing/tool-using-agents.html">Read page</a>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="about">
+      <div class="container">
+        <div class="section-heading">
+          <span class="section-kicker">About</span>
+          <h2>Simple to maintain</h2>
+          <p>No build process. No framework. Just HTML, one shared CSS file, and folders for pages and images.</p>
+        </div>
+
+        <div class="about-grid">
+          <div class="info-card">
+            <h3>How to add images</h3>
+            <p>Upload files into the <strong>images</strong> folder, then swap any existing image path with your own file name.</p>
+            <pre><code>&lt;img src="../images/agenteval.png" alt="AgentEval screenshot" /&gt;</code></pre>
+          </div>
+
+          <div class="info-card">
+            <h3>What you will edit most</h3>
+            <ul>
+              <li><strong>index.html</strong> for the homepage summary</li>
+              <li><strong>projects/*.html</strong> for project details</li>
+              <li><strong>writing/*.html</strong> for essays</li>
+              <li><strong>assets/styles.css</strong> only if you want design changes</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-wrap">
+      <div>© Richard Anarfi</div>
+      <div>Built as a static GitHub Pages site</div>
+    </div>
+  </footer>
+
+  <script src="assets/site.js"></script>
+</body>
+</html>

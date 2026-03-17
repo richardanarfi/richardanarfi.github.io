@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Why exact-match metrics fail for LLM systems | Richard Anarfi</title>
+  <meta name="description" content="A short essay on alternate-valid answers, rubric-based evaluation, and why exact match often under-measures realistic LLM behavior." />
+  <link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav-wrap">
+      <a class="brand" href="../index.html">Richard Anarfi</a>
+      <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false">Menu</button>
+      <nav class="site-nav">
+        <a href="../index.html#projects">Projects</a>
+        <a href="../index.html#writing">Writing</a>
+        <a href="../index.html#about">About</a>
+        <a href="../resume.pdf">Resume</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page-main">
+    <section class="page-hero">
+      <div class="container">
+        <a class="back-link" href="../index.html">← Back to homepage</a>
+        <span class="pill">Technical essay</span>
+        <h1>Why exact-match metrics fail for LLM systems</h1>
+        <p class="lead narrow">A short essay on alternate-valid answers, rubric-based evaluation, and why exact match often under-measures realistic LLM behavior.</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <article class="page-card prose">
+          
+<h2>Why this matters</h2>
+<p>Exact match feels objective, but it often underestimates real capability in LLM systems. Many realistic tasks allow multiple correct answers, multiple correct phrasings, or multiple correct reasoning paths.</p>
+<h2>The failure mode</h2>
+<p>When the benchmark expects one exact string, a model can be correct and still be marked wrong. That creates noisy metrics and hides meaningful improvements.</p>
+<h2>A better direction</h2>
+<p>Use exact checks where they truly fit, but add alternate-valid answers, structured assertions, and rubric-based judging for tasks that involve natural language ambiguity.</p>
+<h2>What a good benchmark does</h2>
+<p>A good benchmark separates deterministic tasks from open-ended tasks and chooses the evaluation method accordingly.</p>
+
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-wrap">
+      <div>© Richard Anarfi</div>
+      <div><a href="../index.html">Homepage</a></div>
+    </div>
+  </footer>
+
+  <script src="../assets/site.js"></script>
+</body>
+</html>
