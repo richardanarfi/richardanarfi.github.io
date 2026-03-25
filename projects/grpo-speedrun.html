@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GRPO Arithmetic | Richard Anarfi</title>
+  <meta name="description" content="Using Group Relative Policy Optimization to teach a small language model arithmetic, exploring reward design, generalization, and training dynamics." />
+  <link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body class="loading">
+  <div class="scroll-progress" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <div class="container nav-wrap">
+      <a class="brand" href="../index.html">Richard Anarfi</a>
+      <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false">Menu</button>
+      <nav class="site-nav">
+        <a href="../index.html#projects">Projects</a>
+        <a href="../index.html#writing">Writing</a>
+        <a href="../index.html#about">About</a>
+        <a href="../resume.pdf">Resume</a>
+        <button class="theme-toggle" aria-label="Toggle dark mode">Dark</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page-main">
+    <!-- HERO -->
+    <section class="page-hero">
+      <div class="container">
+        <a class="back-link" href="../index.html">&larr; Back to portfolio</a>
+        <span class="pill">Reinforcement learning for LLMs</span>
+        <h1>GRPO Arithmetic</h1>
+        <p class="lead narrow">
+          An exploration of Group Relative Policy Optimization (GRPO) for teaching arithmetic
+          to a small language model, investigating how reward design, group size, and training
+          dynamics affect both accuracy and output quality.
+        </p>
+      </div>
+    </section>
+
+    <!-- MOTIVATION -->
+    <section class="section">
+      <div class="container">
+        <div class="section-heading reveal">
+          <span class="section-kicker">Motivation</span>
+          <h2>Why This Experiment</h2>
+        </div>
+        <div class="page-grid">
+          <div class="page-card reveal">
+            <h3>GRPO vs PPO for capability elicitation</h3>
+            <p>
+              PPO requires training a separate value network and reward model, adding complexity and compute.
+              GRPO sidesteps this by generating multiple completions per prompt and using the relative ranking
+              within each group as the baseline. I wanted to understand how this trade-off plays out in practice:
+              does GRPO's simplicity come at the cost of sample efficiency or stability?
+            </p>
+          </div>
+          <div class="page-card reveal reveal-delay-1">
+            <h3>Reward hacking as an alignment microcosm</h3>
+            <p>
+              Arithmetic is a clean testbed for reward design problems. A naive reward (just correctness) causes
+              the model to collapse to bare numeric output, technically correct but stripping all natural language.
+              This is reward hacking at small scale, and the fix (multi-signal reward shaping) mirrors the same
+              challenges in larger alignment work.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- APPROACH -->
+    <section class="section alt">
+      <div class="container">
+        <div class="section-heading reveal">
+          <span class="section-kicker">Architecture</span>
+          <h2>Training Pipeline</h2>
+          <p>Generate multiple completions per prompt, score with a composite reward, and update the policy based on relative advantage within each group.</p>
+        </div>
+
+        <div class="arch-diagram reveal">
+          <div class="arch-node">Arithmetic Prompts</div>
+          <span class="arch-arrow">&rarr;</span>
+          <div class="arch-node">vLLM Generation</div>
+          <span class="arch-arrow">&rarr;</span>
+          <div class="arch-node">Reward Scoring</div>
+          <span class="arch-arrow">&rarr;</span>
+          <div class="arch-node">GRPO Update</div>
+          <span class="arch-arrow">&rarr;</span>
+          <div class="arch-node">Validation</div>
+          <span class="arch-arrow">&rarr;</span>
+          <div class="arch-node">Best Checkpoint</div>
+        </div>
+
+        <!-- TABS -->
+        <div class="reveal">
+          <div class="tab-group">
+            <button class="tab-btn active" data-tab="grpo">GRPO Mechanics</button>
+            <button class="tab-btn" data-tab="rewards">Reward Design</button>
+            <button class="tab-btn" data-tab="config">Training Config</button>
+            <button class="tab-btn" data-tab="eval">Evaluation</button>
+          </div>
+
+          <div class="tab-panel active" data-panel="grpo">
+            <h3>How GRPO Works</h3>
+            <p>
+              For each training step, GRPO samples a batch of prompts and generates multiple completions
+              per prompt (the "group"). Each completion is scored by the reward function. The policy gradient
+              is computed using the <em>relative</em> advantage within each group: completions that score
+              higher than the group mean get reinforced, and lower ones get suppressed.
+            </p>
+            <p>
+              This is simpler than PPO because there's no separate value network or reward model to train.
+              The group comparison acts as a built-in baseline, reducing variance without additional parameters.
+            </p>
+            <div class="code-block">
+              <span class="code-label">Python</span>
+<pre><code>from trl import GRPOConfig, GRPOTrainer
+
+trainer = GRPOTrainer(
+    model         = model,                    # Qwen 2.5 0.5B
+    reward_funcs  = [reward_correctness,      # Is the answer right?
+                     reward_has_words],        # Does it use natural language?
+    args          = train_args,
+    train_dataset = train_dataset,            # 10,000 arithmetic problems
+)
+
+trainer.train()  # GRPO handles generation, scoring, and updates internally</code></pre>
+            </div>
+          </div>
+
+          <div class="tab-panel" data-panel="rewards">
+            <h3>Two-Signal Reward Function</h3>
+            <p>
+              The reward is a weighted combination of two signals: correctness (did the model get the right answer?)
+              and natural language (did it respond with words, not just a bare number?). The second signal
+              prevents reward hacking. Without it, the model learns to strip all text and output only digits.
+            </p>
+            <div class="code-block">
+              <span class="code-label">Python</span>
+<pre><code>def reward_correctness(prompts, completions, answer, **kwargs):
+    """1.0 for correct answer, 0.0 otherwise.
+    Extracts the last number in the completion as the predicted answer."""
+    rewards = []
+    for completion, target in zip(completions, answer):
+        content = completion[-1]["content"]
+        matches = re.findall(r"([+-]?\d+(?:\.\d*)?)", content)
+        predicted = int(float(matches[-1])) if matches else None
+        rewards.append(1.0 if predicted == target else 0.0)
+    return rewards
+
+def reward_has_words(prompts, completions, **kwargs):
+    """1.0 if completion contains natural language, 0.0 if just numbers."""
+    return [
+        1.0 if re.search(r'[a-zA-Z]{2,}', c[-1]["content"]) else 0.0
+        for c in completions
+    ]
+
+# Weighted combination: correctness matters more, but words are rewarded too
+# reward_weights = [0.75, 0.5]</code></pre>
+            </div>
+            <p>
+              The composite scoring function reflects both signals: a correct answer with natural language
+              gets full credit, correct without words gets half credit, and incorrect gets zero.
+              This forces the optimization to balance accuracy with output quality.
+            </p>
+          </div>
+
+          <div class="tab-panel" data-panel="config">
+            <h3>Key Training Parameters</h3>
+            <p>
+              The batch configuration in GRPO is tricky because it controls how many prompts are sampled, how many
+              completions are generated per prompt (the group size), and how many sequences contribute to each
+              optimizer step.
+            </p>
+
+            <div class="code-block">
+              <span class="code-label">Python</span>
+<pre><code>train_args = GRPOConfig(
+    # GRPO & Rollouts
+    temperature           = 0.75,   # Slightly greedy generation
+    top_p                 = 0.9,
+    max_completion_length = 48,     # Arithmetic answers are short
+
+    # Batch: 2 prompts x 8 completions = 16 sequences per step
+    per_device_train_batch_size = 16,
+    num_generations             = 8,  # GRPO group size
+
+    # Optimization
+    learning_rate  = 5e-6,
+    max_steps      = 300,
+    warmup_steps   = 10,
+    weight_decay   = 0.01,
+
+    # Reward
+    reward_weights = [0.75, 0.5],   # [correctness, has_words]
+    scale_rewards  = True,          # Normalize rewards within group
+
+    # vLLM for fast generation
+    use_vllm = True,
+)</code></pre>
+            </div>
+
+            <h4 style="margin-top:20px;">What I Tuned</h4>
+            <p>
+              Through iterative experimentation, the most impactful changes were:
+              doubling the GRPO group size from 4 to 8 (more diverse completions per prompt give a better
+              estimate of relative advantage), enabling reward scaling (normalizing within each group),
+              rebalancing reward weights to increase the natural language signal,
+              and tuning the learning rate from 1e-6 to 5e-6 for faster convergence within the
+              memory constraints of a T4 GPU.
+            </p>
+          </div>
+
+          <div class="tab-panel" data-panel="eval">
+            <h3>Evaluation Strategy</h3>
+            <p>
+              The model is evaluated every 20 training steps on a 200-example validation set using greedy
+              decoding (temperature=0). The best checkpoint is selected by the composite score (penalizing
+              correct-but-no-words answers), not raw accuracy. This ensures the model doesn't sacrifice
+              natural language for marginal accuracy gains.
+            </p>
+            <p>
+              Final testing uses two held-out sets: in-domain (400 problems from the same distribution as
+              training) and out-of-domain (400 problems with different number ranges or operations). The
+              test score is the average of both, testing generalization beyond the training distribution.
+            </p>
+            <div class="code-block">
+              <span class="code-label">Python</span>
+<pre><code>class GreedyEvalCallback(TrainerCallback):
+    """Periodically runs greedy decoding on validation set,
+    saves best checkpoint by composite score."""
+
+    def on_step_end(self, args, state, control, **kwargs):
+        if state.global_step % self.eval_every != 0:
+            return
+
+        result = evaluate_model_vllm(
+            self.vllm, self.tokenizer, self.val_dataset
+        )
+
+        if result.score > self.best_score:
+            self.best_score = result.score
+            self.best_step = state.global_step
+            trainer.save_model(self.best_ckpt_dir)
+            print(f"New best: {result.score:.1f}% at step {state.global_step}")</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- KEY RESULTS -->
+    <section class="section">
+      <div class="container">
+        <div class="section-heading reveal">
+          <span class="section-kicker">Results</span>
+          <h2>Training Results</h2>
+          <p>Results from training Qwen 2.5 (0.5B) with GRPO on a T4 GPU.</p>
+        </div>
+
+        <div class="results-grid reveal">
+          <div class="result-card">
+            <div class="result-label">Test Score</div>
+            <div class="result-value">61.9%</div>
+            <div class="result-note">Average of in-domain + out-of-domain</div>
+          </div>
+          <div class="result-card">
+            <div class="result-label">In-Domain Accuracy</div>
+            <div class="result-value">66.8%</div>
+            <div class="result-note">Same distribution as training</div>
+          </div>
+          <div class="result-card">
+            <div class="result-label">Out-of-Domain Accuracy</div>
+            <div class="result-value">57.0%</div>
+            <div class="result-note">Unseen number ranges / operations</div>
+          </div>
+          <div class="result-card">
+            <div class="result-label">No-Words Penalty</div>
+            <div class="result-value">0</div>
+            <div class="result-note">Reward shaping fully prevented collapse</div>
+          </div>
+        </div>
+
+        <div class="page-grid reveal" style="margin-top:20px;">
+          <div class="page-card">
+            <h3>The generalization gap</h3>
+            <p>
+              In-domain accuracy (66.8%) was noticeably higher than out-of-domain (57.0%), showing that
+              while GRPO teaches the model <em>how</em> to do arithmetic, generalization to unseen number
+              ranges remains the harder challenge. The gap suggests the model partially memorizes patterns
+              rather than learning fully general arithmetic reasoning, an open question for RL-trained
+              capabilities more broadly.
+            </p>
+          </div>
+          <div class="page-card">
+            <h3>Reward shaping worked</h3>
+            <p>
+              The dual reward signal maintained natural language responses throughout training with zero
+              penalty. This shows that multi-signal reward shaping (weighting has_words at 0.5)
+              effectively prevents the model from collapsing to bare numeric output, a small-scale
+              demonstration of the same reward design principles used in larger alignment work.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- LESSONS LEARNED -->
+    <section class="section alt">
+      <div class="container">
+        <div class="section-heading reveal">
+          <span class="section-kicker">Insights</span>
+          <h2>Lessons Learned</h2>
+        </div>
+
+        <div class="reveal">
+          <div class="expandable">
+            <button class="expandable-header">GRPO group size is the most impactful hyperparameter</button>
+            <div class="expandable-body">
+              <p>
+                Doubling the group size from 4 to 8 completions per prompt was the single biggest improvement
+                across iterations. A larger group gives GRPO a better estimate of the relative advantage —
+                with only 4 samples, the ranking is noisy and the gradient signal is unreliable. With 8
+                samples, the model gets a clearer signal about which response patterns are better. This
+                mirrors findings in the GRPO literature on the bias-variance trade-off in group size selection.
+              </p>
+            </div>
+          </div>
+
+          <div class="expandable">
+            <button class="expandable-header">Reward hacking appears even in simple domains</button>
+            <div class="expandable-body">
+              <p>
+                Without the has_words reward, the model quickly learns to output bare numbers, maximizing
+                correctness at the expense of natural language. The weighted combination (0.75 correctness +
+                0.5 has_words) creates a reward landscape where the model is incentivized to be both correct
+                and articulate. If reward hacking appears this readily in basic arithmetic, it's clear why
+                reward design for more complex capabilities requires such careful thought.
+              </p>
+            </div>
+          </div>
+
+          <div class="expandable">
+            <button class="expandable-header">vLLM makes RL on LLMs practical on consumer GPUs</button>
+            <div class="expandable-body">
+              <p>
+                The bottleneck in GRPO training is generation: producing 8 completions per prompt for every
+                training step. Without vLLM's optimized inference (PagedAttention, continuous batching),
+                the generation phase would dominate wall time and make iteration impractical. With vLLM,
+                the full training loop completes in under 10 minutes on a T4, enabling rapid experimentation
+                with reward weights, group sizes, and learning rates.
+              </p>
+            </div>
+          </div>
+
+          <div class="expandable">
+            <button class="expandable-header">RL training overshoots, so checkpoint selection matters</button>
+            <div class="expandable-body">
+              <p>
+                The best checkpoint was at step 260, not the final step 300. Training beyond the optimum
+                caused slight degradation, a common pattern in RL where the policy overshoots. Validating
+                every 20 steps and saving the best by composite score (not raw accuracy) ensured the peak
+                was captured while respecting the natural language constraint.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- AT A GLANCE -->
+    <section class="section">
+      <div class="container">
+        <div class="page-grid reveal">
+          <div class="page-card">
+            <h3>At a Glance</h3>
+            <ul>
+              <li><strong>Algorithm:</strong> GRPO (Group Relative Policy Optimization)</li>
+              <li><strong>Model:</strong> Qwen 2.5 0.5B Instruct</li>
+              <li><strong>Stack:</strong> Python, PyTorch, HuggingFace TRL, vLLM</li>
+              <li><strong>Hardware:</strong> T4 GPU (16 GB)</li>
+              <li><strong>Dataset:</strong> 10K training, 200 val, 800 test arithmetic problems</li>
+            </ul>
+          </div>
+          <div class="page-card">
+            <h3>What This Demonstrates</h3>
+            <ul>
+              <li>Reinforcement learning for language models (GRPO/PPO family)</li>
+              <li>Reward function design and multi-signal reward shaping</li>
+              <li>Preventing reward hacking through composite objectives</li>
+              <li>Hyperparameter tuning under hardware constraints</li>
+              <li>Checkpoint selection by composite score vs raw accuracy</li>
+              <li>Generalization analysis (in-domain vs out-of-domain)</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-wrap">
+      <div>Richard Anarfi</div>
+      <div class="footer-links">
+        <a href="https://github.com/richardanarfi">GitHub</a>
+        <a href="https://www.linkedin.com/in/richard-anarfi-ph-d-34237352/">LinkedIn</a>
+        <a href="https://scholar.google.com/citations?user=A6SiTRYAAAAJ&hl=en">Google Scholar</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="../assets/site.js"></script>
+</body>
+</html>

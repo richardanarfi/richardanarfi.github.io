@@ -4,10 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>How to evaluate tool-using agents beyond pass/fail | Richard Anarfi</title>
-  <meta name="description" content="A short essay on why agent evaluation should track process, tool choice, recovery, and unsupported claims instead of only final success." />
+  <meta name="description" content="Tool choice, recovery behavior, hallucination rates, and why agent evaluation should separate process from outcome." />
   <link rel="stylesheet" href="../assets/styles.css" />
 </head>
-<body>
+<body class="loading">
+  <div class="scroll-progress" aria-hidden="true"></div>
+
   <header class="site-header">
     <div class="container nav-wrap">
       <a class="brand" href="../index.html">Richard Anarfi</a>
@@ -17,6 +19,7 @@
         <a href="../index.html#writing">Writing</a>
         <a href="../index.html#about">About</a>
         <a href="../resume.pdf">Resume</a>
+        <button class="theme-toggle" aria-label="Toggle dark mode">Dark</button>
       </nav>
     </div>
   </header>
@@ -24,23 +27,75 @@
   <main class="page-main">
     <section class="page-hero">
       <div class="container">
-        <a class="back-link" href="../index.html">← Back to homepage</a>
-        <span class="pill">Technical essay</span>
+        <a class="back-link" href="../index.html">&larr; Back to portfolio</a>
+        <span class="pill">Writing</span>
         <h1>How to evaluate tool-using agents beyond pass/fail</h1>
-        <p class="lead narrow">A short essay on why agent evaluation should track process, tool choice, recovery, and unsupported claims instead of only final success.</p>
+        <p class="lead narrow">Tool choice, recovery behavior, hallucination rates, and why agent evaluation should separate process from outcome.</p>
       </div>
     </section>
 
     <section class="section">
       <div class="container">
-        <article class="page-card prose">
-          
-<h2>Pass/fail is not enough</h2>
-<p>Two agents can both fail the same task for very different reasons. One may choose the wrong tool. Another may choose the right tool, recover from an intermediate error, and still miss the final answer narrowly.</p>
-<h2>What to track instead</h2>
-<p>Track tool selection accuracy, recovery behavior, unsupported claims, and final answer quality separately. That makes the benchmark more diagnostic and more useful for iteration.</p>
-<h2>Why this helps</h2>
-<p>If the evaluation is diagnostic, prompt or model changes can be tied to specific improvements instead of treated as a black box.</p>
+        <article class="page-card prose reveal">
+
+<h2>The pass/fail trap</h2>
+<p>Most agent benchmarks work like this: give the agent a task, check if the final answer is correct, report a pass rate. This tells you almost nothing useful. Two agents can both score 70% and be failing in completely different ways. One might be picking the wrong tools. The other might be picking the right tools with wrong parameters. A third might be doing everything right but failing to recover when a tool call returns an error. Pass/fail treats all of these as the same kind of failure, which makes it useless for debugging or improvement.</p>
+
+<p>The deeper problem is that pass/fail can't distinguish a good process from a lucky outcome. An agent can stumble into the right answer through the wrong tools. It can brute-force a calculation by dumping everything into a code interpreter when a targeted API call would have been faster and more reliable. If your metric only checks the final answer, these look identical. But in production, the agent that uses the right tools is faster, cheaper, and more reliable than the one that gets lucky.</p>
+
+<h2>Separate process from outcome</h2>
+<p>The fix is to evaluate the agent's decision process independently from the final result. This means logging and scoring every intermediate step: which tool was selected, what parameters were passed, whether the tool call succeeded, and what the agent did with the result.</p>
+
+<p>Concretely, for each task you evaluate at least three dimensions:</p>
+<ul>
+  <li><strong>Tool selection accuracy:</strong> Did the agent invoke the right tool for the task? For multi-step tasks, did it invoke the right sequence of tools? This extends naturally to precision and recall over the expected tool set.</li>
+  <li><strong>Parameter correctness:</strong> Given the right tool, were the arguments correct? A web search with the right query is very different from a web search with a vague or fabricated query. Scoring parameters separately from tool selection pinpoints whether the problem is routing (picking the wrong tool) or grounding (picking the right tool but with bad inputs).</li>
+  <li><strong>Task success:</strong> Did the final answer match the expected output or an acceptable alternative? This is still important, but it's one signal among several, not the only one.</li>
+</ul>
+
+<p>With all three dimensions, a failure analysis becomes actionable. "Tool selection dropped 8% on retrieval tasks after adding the calculator tool" is something you can investigate and fix. "Pass rate dropped 3%" is not.</p>
+
+<h2>Recovery behavior</h2>
+<p>One of the most informative dimensions is what the agent does when something goes wrong. Tools fail. APIs return errors. Search results come back empty. The question is: does the agent handle this gracefully?</p>
+
+<p>In practice, I've observed four recovery patterns:</p>
+<ol>
+  <li><strong>Retry with correction:</strong> The agent recognizes the error, adjusts the parameters, and retries. This is the best outcome.</li>
+  <li><strong>Fallback to alternative:</strong> The agent switches to a different tool that can accomplish the same goal. Also good, though it requires the agent to understand tool equivalences.</li>
+  <li><strong>Blind retry:</strong> The agent repeats the exact same failing call, sometimes multiple times. This wastes tokens and time while accomplishing nothing.</li>
+  <li><strong>Abandonment:</strong> The agent gives up and either returns an incomplete answer or says it can't help. This is the worst outcome for the user.</li>
+</ol>
+
+<p>Recovery score has the highest variance across models of any metric I've measured. Models that look similar on pass/fail diverge sharply on recovery. This makes sense: recovery requires the model to interpret an error message, reason about what went wrong, and generate a corrective action. It's a harder capability than the initial tool selection, and it's where model quality shows up most clearly.</p>
+
+<h2>Tool interaction effects</h2>
+<p>A subtle failure mode that pass/fail completely misses is tool interaction. Adding a new tool to an agent's toolkit can degrade performance on existing tasks, even though the new tool works fine on its own. This happens because tool descriptions compete for attention in the prompt. A new tool with vocabulary that overlaps an existing tool (e.g., both have "search" in the description) can confuse routing and cause the agent to invoke the wrong one.</p>
+
+<p>To catch this, you need a regression framework: run the same task set before and after adding the new tool, and measure the delta. The key insight is that you should measure this per existing tool, per quality dimension. An aggregate "pass rate dropped 2%" hides the fact that one specific tool's selection accuracy collapsed by 15% while everything else was fine.</p>
+
+<p>Interaction effects can also be non-linear. Two tools might each cause a small individual regression, but when both are added together the combined effect is much worse than the sum of individual effects. Game-theoretic methods like the Shapley Interaction Index can quantify this: the portion of the combined degradation that can't be predicted from individual tool effects. If the interaction index is non-zero, you have an emergent conflict that individual testing would never reveal.</p>
+
+<h2>LLM-as-judge for qualitative dimensions</h2>
+<p>Some evaluation dimensions resist programmatic scoring. When multiple tools contributed to a response, is the result a coherent synthesis or a disjointed patchwork? When a new tool is added, does its information leak into unrelated responses? These are judgment calls that require understanding context and intent.</p>
+
+<p>LLM judges can evaluate these dimensions, but the implementation matters. The most important design choice is to use separate judges for separate dimensions. A single judge scoring "synthesis quality" and "capability bleed" and "routing justification" simultaneously will exhibit cross-dimension anchor bias. A low score on synthesis quality unconsciously pulls down the routing justification score, even if routing was fine. Independent judges eliminate this.</p>
+
+<p>The second important choice is using multiple models as judges. A three-judge panel (e.g., different model sizes or families) provides a built-in reliability signal. Unanimous agreement means you can trust the score. A 2-1 split means the case is worth a closer look. Running a structured debate where a fourth judge reviews the disagreeing judges' reasoning and renders a final verdict pushes agreement with human annotators from 94% (majority vote) to 97% (debate resolution).</p>
+
+<h2>What a diagnostic benchmark looks like</h2>
+<p>Putting this together, a diagnostic agent benchmark produces a report that looks more like a test suite than a single number:</p>
+
+<ul>
+  <li>Tool selection accuracy per tool, per task category</li>
+  <li>Parameter accuracy per tool</li>
+  <li>Recovery success rate and recovery pattern distribution</li>
+  <li>Task success rate (the traditional pass/fail, but now contextualized)</li>
+  <li>Regression scores when tool configurations change</li>
+  <li>Interaction indices for tool pairs</li>
+  <li>Judge scores on qualitative dimensions</li>
+</ul>
+
+<p>This is more work to build and maintain than a simple pass/fail benchmark. But the payoff is that every metric is actionable. When something drops, you know where to look. When you make a change, you can measure its effect on the specific dimension you were targeting instead of hoping the aggregate pass rate moves in the right direction. Evaluation should help you build better agents, not just tell you whether you got lucky.</p>
 
         </article>
       </div>
@@ -49,8 +104,12 @@
 
   <footer class="site-footer">
     <div class="container footer-wrap">
-      <div>© Richard Anarfi</div>
-      <div><a href="../index.html">Homepage</a></div>
+      <div>Richard Anarfi</div>
+      <div class="footer-links">
+        <a href="https://github.com/richardanarfi">GitHub</a>
+        <a href="https://www.linkedin.com/in/richard-anarfi-ph-d-34237352/">LinkedIn</a>
+        <a href="https://scholar.google.com/citations?user=A6SiTRYAAAAJ&hl=en">Google Scholar</a>
+      </div>
     </div>
   </footer>
 

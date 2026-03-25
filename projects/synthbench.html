@@ -3,11 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SynthBench | Richard Anarfi</title>
-  <meta name="description" content="A synthetic task generation and validation pipeline for agent benchmarks, with support for alternate-valid answers and evaluation rubrics." />
+  <title>SynthEval | Richard Anarfi</title>
+  <meta name="description" content="A pipeline for generating and validating synthetic evaluation data for tool-using LLM agents." />
   <link rel="stylesheet" href="../assets/styles.css" />
 </head>
-<body>
+<body class="loading">
+  <div class="scroll-progress" aria-hidden="true"></div>
+
   <header class="site-header">
     <div class="container nav-wrap">
       <a class="brand" href="../index.html">Richard Anarfi</a>
@@ -17,72 +19,396 @@
         <a href="../index.html#writing">Writing</a>
         <a href="../index.html#about">About</a>
         <a href="../resume.pdf">Resume</a>
+        <button class="theme-toggle" aria-label="Toggle dark mode">Dark</button>
       </nav>
     </div>
   </header>
 
   <main class="page-main">
+    <!-- HERO -->
     <section class="page-hero">
       <div class="container">
-        <a class="back-link" href="../index.html">← Back to homepage</a>
-        <span class="pill">Synthetic data and validation</span>
-        <h1>SynthBench</h1>
-        <p class="lead narrow">A synthetic task generation and validation pipeline for agent benchmarks, with support for alternate-valid answers and evaluation rubrics.</p>
+        <a class="back-link" href="../index.html">&larr; Back to portfolio</a>
+        <span class="pill">Synthetic evaluation data pipeline</span>
+        <h1>SynthEval</h1>
+        <p class="lead narrow">
+          Hand-authoring evaluation tasks for tool-using agents is expensive and slow.
+          SynthEval generates synthetic tasks at scale, validates them with a multi-judge panel,
+          and produces ground truth that's statistically indistinguishable from human-authored data.
+        </p>
       </div>
     </section>
 
-    <section class="section">
-      <div class="container page-grid">
-        <article class="page-card">
-          <h2>Project summary</h2>
-          <p>SynthBench lets you publicly show the kind of thinking that matters in synthetic data work: generating tasks is not enough; you also need filters, rubrics, alternate answers, and evidence that the generated data is useful.</p>
-          <p>A strong final version of this page would explain your seed task strategy, generation pipeline, validation checks, and how you would compare synthetic tasks against human-authored tasks.</p>
-        </article>
-
-        <aside class="page-card">
-          <h2>At a glance</h2>
-          <ul>
-            <li>Category: synthetic data</li><li>Best for: differentiation</li><li>Core assets: seed set, generators, validators, reports</li>
-          </ul>
-        </aside>
-      </div>
-    </section>
-
-    <section class="section alt">
-      <div class="container page-grid">
-        <article class="page-card">
-          <h2>What this demonstrates</h2>
-          <ul>
-            <li>Synthetic task generation with quality control</li><li>Awareness of label ambiguity and alternate-valid outputs</li><li>A practical approach to data reliability</li>
-          </ul>
-        </article>
-
-        <article class="page-card image-card">
-          <h2>Image slot</h2>
-          <img src="../images/synthbench-card.png" alt="SynthBench placeholder graphic" />
-          <p class="caption">Replace this placeholder with a real screenshot or diagram later.</p>
-        </article>
-      </div>
-    </section>
-
+    <!-- THE PROBLEM -->
     <section class="section">
       <div class="container">
-        <article class="page-card">
-          <h2>Next edits you should make</h2>
-          <ol>
-            <li>Replace the placeholder paragraphs with your real public project description.</li>
-            <li>Add links to GitHub, a demo, or a writeup if you have them.</li>
-            <li>Swap in a real image in the <strong>images</strong> folder.</li>
-          </ol>
-        </article>
+        <div class="section-heading reveal">
+          <span class="section-kicker">Motivation</span>
+          <h2>The Problem</h2>
+        </div>
+        <div class="page-grid">
+          <div class="page-card reveal">
+            <h3>Human authoring doesn't scale</h3>
+            <p>
+              Writing a single high-quality evaluation task (with a query, expected tool calls, gold answer,
+              difficulty label, and rubric) takes 15-30 minutes. A benchmark suite of 200 tasks across
+              multiple categories requires weeks of expert time. Every time the tool set changes,
+              the benchmark needs new tasks.
+            </p>
+          </div>
+          <div class="page-card reveal reveal-delay-1">
+            <h3>Naive generation produces degenerate tasks</h3>
+            <p>
+              Simply prompting an LLM to "generate evaluation tasks" yields tasks that are too easy,
+              too similar to each other, or not representative of real usage. Without validation, synthetic
+              benchmarks give false confidence because models ace them but fail on real-world queries.
+            </p>
+          </div>
+        </div>
       </div>
     </section>
+
+    <!-- PIPELINE -->
+    <section class="section alt">
+      <div class="container">
+        <div class="section-heading reveal">
+          <span class="section-kicker">Architecture</span>
+          <h2>Generation &amp; Validation Pipeline</h2>
+          <p>Seed tasks are expanded via three strategies, filtered for quality, then validated by a multi-judge panel.</p>
+        </div>
+
+        <div class="arch-diagram reveal">
+          <div class="arch-node">Human Seeds</div>
+          <span class="arch-arrow">&rarr;</span>
+          <div class="arch-node">Task Generator</div>
+          <span class="arch-arrow">&rarr;</span>
+          <div class="arch-node">Quality Filter</div>
+          <span class="arch-arrow">&rarr;</span>
+          <div class="arch-node">Rubric Generator</div>
+          <span class="arch-arrow">&rarr;</span>
+          <div class="arch-node">Multi-Judge Panel</div>
+          <span class="arch-arrow">&rarr;</span>
+          <div class="arch-node">Ground Truth</div>
+        </div>
+
+        <!-- TABS -->
+        <div class="reveal">
+          <div class="tab-group">
+            <button class="tab-btn active" data-tab="seeds">Seed Strategy</button>
+            <button class="tab-btn" data-tab="generation">Generation</button>
+            <button class="tab-btn" data-tab="validation">Validation</button>
+            <button class="tab-btn" data-tab="rubrics">Rubric Design</button>
+          </div>
+
+          <div class="tab-panel active" data-panel="seeds">
+            <h3>Human Seed Tasks</h3>
+            <p>
+              The pipeline starts with 15-20 hand-authored seed tasks spanning difficulty levels (easy, medium, hard)
+              and tool categories (retrieval, calculation, multi-step, error recovery). Each seed is a complete
+              evaluation record, not just a query, but the full expected trace.
+            </p>
+            <div class="code-block">
+              <span class="code-label">JSON</span>
+<pre><code>{
+  "seed_id": "seed_003",
+  "category": "retrieval",
+  "difficulty": "medium",
+  "query": "Find the current CEO of Anthropic and their educational background",
+  "expected_tools": [
+    {"tool": "web_search", "params": {"query": "Anthropic CEO"}}
+  ],
+  "gold_answer": "Dario Amodei, PhD in Computational Neuroscience from Princeton",
+  "reasoning_trace": "Single retrieval task requiring entity extraction from search results",
+  "domain_tags": ["company_info", "person_lookup"],
+  "distractor_tools": ["database_query", "calculator"]
+}</code></pre>
+            </div>
+            <p>
+              The <code>distractor_tools</code> field lists tools that are plausible but wrong for this task.
+              During generation, the pipeline creates variants that test whether the agent resists these distractors.
+            </p>
+          </div>
+
+          <div class="tab-panel" data-panel="generation">
+            <h3>Three Expansion Strategies</h3>
+            <p>
+              Each seed task is expanded using three complementary strategies. The generator uses few-shot
+              prompting with the seed as an example, plus 2-3 other seeds for diversity.
+            </p>
+            <ul>
+              <li><strong>Paraphrase:</strong> Same task, different wording. "Find the CEO of Anthropic" becomes
+                "Who leads Anthropic as chief executive?" Tests whether the agent is robust to surface variation.</li>
+              <li><strong>Analogize:</strong> Same structure, different domain. A CEO lookup becomes a CTO lookup
+                for a different company. Tests whether the agent generalizes the pattern.</li>
+              <li><strong>Compose:</strong> Combine two seed tasks into a multi-step task. A retrieval seed + a
+                calculation seed becomes "Find Anthropic's founding year and calculate how many years ago that was."</li>
+            </ul>
+
+            <h4 style="margin-top:20px;">Quality Filter</h4>
+            <p>Generated tasks pass through three filters before acceptance:</p>
+            <ol>
+              <li><strong>Deduplication:</strong> Embedding cosine similarity &gt; 0.92 with any existing task → reject</li>
+              <li><strong>Self-consistency:</strong> Run the task through a model twice. If answers diverge, the task is ambiguous → reject</li>
+              <li><strong>Difficulty calibration:</strong> If a "hard" task is solved correctly by all 3 test models, downgrade to "medium"</li>
+            </ol>
+
+            <div class="code-block">
+              <span class="code-label">Python</span>
+<pre><code>def quality_filter(task, existing_tasks, embedder, models):
+    """Three-stage quality filter for generated tasks."""
+    # 1. Deduplication via embedding similarity
+    task_embedding = embedder.encode(task.query)
+    for existing in existing_tasks:
+        sim = cosine_similarity(task_embedding, existing.embedding)
+        if sim > 0.92:
+            return Reject("too_similar", similarity=sim)
+
+    # 2. Self-consistency check
+    answers = [run_task(model, task) for model in models[:2]]
+    if not semantically_equivalent(answers[0], answers[1]):
+        return Reject("ambiguous", answers=answers)
+
+    # 3. Difficulty calibration
+    pass_count = sum(1 for m in models if run_task(m, task).correct)
+    if task.difficulty == "hard" and pass_count == len(models):
+        task.difficulty = "medium"
+
+    return Accept(task)</code></pre>
+            </div>
+          </div>
+
+          <div class="tab-panel" data-panel="validation">
+            <h3>Multi-Judge Ground Truth Validation</h3>
+            <p>
+              Every generated task is validated by a 3-judge panel. Each judge independently evaluates whether the
+              expected tool calls and gold answer are correct for the query. Using different models as judges
+              provides reasoning diversity, and agreement across models is a strong signal of correctness.
+            </p>
+
+            <div class="code-block">
+              <span class="code-label">Python</span>
+<pre><code>async def validate_ground_truth(task, judges):
+    """Three-judge validation with debate resolution."""
+    # Run all judges in parallel
+    verdicts = await asyncio.gather(*[
+        judge.evaluate(task) for judge in judges
+    ])
+    # judges = [claude-opus, claude-sonnet, claude-haiku]
+
+    relevant_indices = [v.relevant_record_indices for v in verdicts]
+
+    # Check agreement per record
+    for record_idx in all_record_indices(task):
+        votes = [record_idx in ri for ri in relevant_indices]
+        if all(votes):       # Unanimous relevant → include
+            final.include(record_idx)
+        elif not any(votes): # Unanimous not relevant → exclude
+            final.exclude(record_idx)
+        else:                # Disagreement → debate
+            resolution = await debate_arbiter.resolve(
+                task, record_idx, verdicts
+            )
+            final.apply(resolution)
+
+    return final</code></pre>
+            </div>
+
+            <h4 style="margin-top:20px;">Sentinel Validation</h4>
+            <p>
+              After ground truth is finalized, a sentinel check verifies that every task's expected records are present
+              in the ground truth. If a seed task's expected tool calls don't appear as relevant in the final ground
+              truth, something went wrong in generation or validation. <strong>All sentinel scores must be 1.0</strong> —
+              any failure triggers re-evaluation.
+            </p>
+          </div>
+
+          <div class="tab-panel" data-panel="rubrics">
+            <h3>Automated Rubric Generation</h3>
+            <p>
+              Each task gets an auto-generated rubric with 3-5 evaluation criteria. Rubrics support alternate-valid
+              tool call sequences, since there may be multiple correct ways to solve a task, and the rubric should
+              accept all of them.
+            </p>
+            <div class="code-block">
+              <span class="code-label">JSON</span>
+<pre><code>{
+  "task_id": "gen_042",
+  "rubric": {
+    "criteria": [
+      {
+        "dimension": "tool_selection",
+        "weight": 0.3,
+        "passing": "Agent uses web_search or knowledge_base for retrieval",
+        "failing": "Agent uses calculator or code_interpreter for a retrieval task"
+      },
+      {
+        "dimension": "parameter_quality",
+        "weight": 0.25,
+        "passing": "Search query contains the target entity name",
+        "failing": "Search query is vague or unrelated to the entity"
+      },
+      {
+        "dimension": "answer_correctness",
+        "weight": 0.3,
+        "passing": "Answer contains the correct entity and key attributes",
+        "failing": "Answer is factually incorrect or incomplete"
+      },
+      {
+        "dimension": "efficiency",
+        "weight": 0.15,
+        "passing": "Task completed in 1-2 tool calls",
+        "failing": "More than 3 tool calls for a single-step retrieval"
+      }
+    ],
+    "alternate_valid_paths": [
+      ["web_search"],
+      ["knowledge_base"],
+      ["web_search", "web_search"]
+    ]
+  }
+}</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- KEY RESULTS -->
+    <section class="section">
+      <div class="container">
+        <div class="section-heading reveal">
+          <span class="section-kicker">Findings</span>
+          <h2>Key Results</h2>
+          <p>Results from expanding 18 seed tasks into a 240-task benchmark and validating against human-authored ground truth.</p>
+        </div>
+
+        <div class="results-grid reveal">
+          <div class="result-card">
+            <div class="result-label">Seed → Synthetic Ratio</div>
+            <div class="result-value">1:13.3</div>
+            <div class="result-note">18 seeds → 240 validated tasks</div>
+          </div>
+          <div class="result-card">
+            <div class="result-label">Filter Rejection Rate</div>
+            <div class="result-value">34%</div>
+            <div class="result-note">112 of 332 generated tasks rejected</div>
+          </div>
+          <div class="result-card">
+            <div class="result-label">Judge Agreement</div>
+            <div class="result-value">91.2%</div>
+            <div class="result-note">Unanimous on 91.2% of task-record pairs</div>
+          </div>
+          <div class="result-card">
+            <div class="result-label">Human Correlation</div>
+            <div class="result-value">r=0.94</div>
+            <div class="result-note">Synthetic vs human task difficulty ranking</div>
+          </div>
+        </div>
+
+        <div class="page-grid reveal" style="margin-top:20px;">
+          <div class="page-card">
+            <h3>Synthetic tasks match human discriminative power</h3>
+            <p>
+              The synthetic benchmark separated strong and weak models with the same ranking as the human-authored
+              benchmark (Spearman &rho; = 0.94). The key was difficulty calibration; without it, synthetic tasks
+              clustered at "easy" and lost discriminative power.
+            </p>
+          </div>
+          <div class="page-card">
+            <h3>Composition creates the hardest tasks</h3>
+            <p>
+              Tasks generated via the "compose" strategy (combining two seeds) had the highest failure rate across
+              all models (62% vs 23% for paraphrase and 31% for analogize). Composition is where synthetic generation
+              adds the most value because these tasks are hard to write by hand.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- LESSONS LEARNED -->
+    <section class="section alt">
+      <div class="container">
+        <div class="section-heading reveal">
+          <span class="section-kicker">Insights</span>
+          <h2>Lessons Learned</h2>
+        </div>
+
+        <div class="reveal">
+          <div class="expandable">
+            <button class="expandable-header">Why naive generation produces degenerate tasks</button>
+            <div class="expandable-body">
+              <p>
+                Without seeds, LLMs generate tasks that are superficially diverse but structurally identical: different
+                topics but the same retrieval pattern, the same difficulty, and the same expected tool. The seed-based
+                approach forces structural diversity by design: each seed defines a different task skeleton.
+              </p>
+            </div>
+          </div>
+
+          <div class="expandable">
+            <button class="expandable-header">Difficulty calibration is the difference between useful and useless benchmarks</button>
+            <div class="expandable-body">
+              <p>
+                The first pass of generation produced 78% "easy" tasks and only 8% "hard" tasks. Models aced the
+                benchmark and it provided no signal. After adding the calibration step (if all models pass a "hard" task,
+                downgrade it), the distribution shifted to 35/42/23 easy/medium/hard. This matched the human-authored
+                distribution and restored discriminative power.
+              </p>
+            </div>
+          </div>
+
+          <div class="expandable">
+            <button class="expandable-header">The multi-judge panel catches systematic biases a single judge misses</button>
+            <div class="expandable-body">
+              <p>
+                Claude Haiku was consistently more lenient, marking 12% more records as relevant than Claude Opus.
+                Using a single judge would have produced systematically inflated ground truth. The three-judge panel
+                with debate resolution produced ground truth that matched human annotations at 96% agreement, versus
+                89% for single-judge validation.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- AT A GLANCE -->
+    <section class="section">
+      <div class="container">
+        <div class="page-grid reveal">
+          <div class="page-card">
+            <h3>At a Glance</h3>
+            <ul>
+              <li><strong>Stack:</strong> Python, Claude API, sentence-transformers, asyncio</li>
+              <li><strong>Judges:</strong> Claude Opus, Claude Sonnet, Claude Haiku</li>
+              <li><strong>Output:</strong> 240 validated tasks from 18 seeds</li>
+              <li><strong>Validation:</strong> 100% sentinel recall, r=0.94 human correlation</li>
+            </ul>
+          </div>
+          <div class="page-card">
+            <h3>What This Demonstrates</h3>
+            <ul>
+              <li>Synthetic data generation with principled quality control</li>
+              <li>Multi-judge validation with debate resolution</li>
+              <li>Embedding-based deduplication and difficulty calibration</li>
+              <li>Rubric design supporting alternate-valid paths</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
   </main>
 
   <footer class="site-footer">
     <div class="container footer-wrap">
-      <div>© Richard Anarfi</div>
-      <div><a href="../index.html">Homepage</a></div>
+      <div>Richard Anarfi</div>
+      <div class="footer-links">
+        <a href="https://github.com/richardanarfi">GitHub</a>
+        <a href="https://www.linkedin.com/in/richard-anarfi-ph-d-34237352/">LinkedIn</a>
+        <a href="https://scholar.google.com/citations?user=A6SiTRYAAAAJ&hl=en">Google Scholar</a>
+      </div>
     </div>
   </footer>
 

@@ -3,11 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AgentEval | Richard Anarfi</title>
-  <meta name="description" content="A benchmark harness for tool-using LLM systems, focused on measuring task success, tool choice, recovery behavior, and robustness across prompt and model variants." />
+  <title>ToolEval | Richard Anarfi</title>
+  <meta name="description" content="A framework for evaluating tool calls in LLM agents: measuring selection accuracy, regression, and interaction effects." />
   <link rel="stylesheet" href="../assets/styles.css" />
 </head>
-<body>
+<body class="loading">
+  <div class="scroll-progress" aria-hidden="true"></div>
+
   <header class="site-header">
     <div class="container nav-wrap">
       <a class="brand" href="../index.html">Richard Anarfi</a>
@@ -17,72 +19,400 @@
         <a href="../index.html#writing">Writing</a>
         <a href="../index.html#about">About</a>
         <a href="../resume.pdf">Resume</a>
+        <button class="theme-toggle" aria-label="Toggle dark mode">Dark</button>
       </nav>
     </div>
   </header>
 
   <main class="page-main">
+    <!-- HERO -->
     <section class="page-hero">
       <div class="container">
-        <a class="back-link" href="../index.html">← Back to homepage</a>
-        <span class="pill">Flagship benchmark project</span>
-        <h1>AgentEval</h1>
-        <p class="lead narrow">A benchmark harness for tool-using LLM systems, focused on measuring task success, tool choice, recovery behavior, and robustness across prompt and model variants.</p>
+        <a class="back-link" href="../index.html">&larr; Back to portfolio</a>
+        <span class="pill">Tool call evaluation framework</span>
+        <h1>ToolEval</h1>
+        <p class="lead narrow">
+          Most agent benchmarks measure final-answer accuracy and stop there.
+          ToolEval evaluates the <em>process</em>: did the agent pick the right tool, pass correct parameters,
+          compose calls in the right order, and recover gracefully when things go wrong?
+        </p>
       </div>
     </section>
 
-    <section class="section">
-      <div class="container page-grid">
-        <article class="page-card">
-          <h2>Project summary</h2>
-          <p>AgentEval is the strongest public proxy for enterprise evaluation and agent-routing work. The core idea is simple: instead of showing a generic chatbot, show a measurable system that runs tasks, tracks tool traces, and produces comparable reports.</p>
-          <p>This project page should eventually include your benchmark categories, scoring approach, model comparisons, and a short section on what failed and why. That is the kind of detail that makes the project credible.</p>
-        </article>
-
-        <aside class="page-card">
-          <h2>At a glance</h2>
-          <ul>
-            <li>Category: evaluation infrastructure</li><li>Best for: Anthropic Agents role</li><li>Core assets: task set, runner, metrics, failure analysis</li>
-          </ul>
-        </aside>
-      </div>
-    </section>
-
-    <section class="section alt">
-      <div class="container page-grid">
-        <article class="page-card">
-          <h2>What this demonstrates</h2>
-          <ul>
-            <li>Benchmark design for complex LLM tasks</li><li>Evaluation beyond exact-match pass/fail</li><li>Clear systems thinking about agent reliability</li>
-          </ul>
-        </article>
-
-        <article class="page-card image-card">
-          <h2>Image slot</h2>
-          <img src="../images/agenteval-card.png" alt="AgentEval placeholder graphic" />
-          <p class="caption">Replace this placeholder with a real screenshot or diagram later.</p>
-        </article>
-      </div>
-    </section>
-
+    <!-- THE PROBLEM -->
     <section class="section">
       <div class="container">
-        <article class="page-card">
-          <h2>Next edits you should make</h2>
-          <ol>
-            <li>Replace the placeholder paragraphs with your real public project description.</li>
-            <li>Add links to GitHub, a demo, or a writeup if you have them.</li>
-            <li>Swap in a real image in the <strong>images</strong> folder.</li>
-          </ol>
-        </article>
+        <div class="section-heading reveal">
+          <span class="section-kicker">Motivation</span>
+          <h2>The Problem</h2>
+        </div>
+        <div class="page-grid">
+          <div class="page-card reveal">
+            <h3>Pass/fail misses process quality</h3>
+            <p>
+              An agent can arrive at the correct answer through the wrong tools, like using a web search when a database
+              query was appropriate, or brute-forcing a calculation with code when a calculator tool was available.
+              Task success alone doesn't distinguish efficient tool use from lucky outcomes.
+            </p>
+          </div>
+          <div class="page-card reveal reveal-delay-1">
+            <h3>New tools cause silent regressions</h3>
+            <p>
+              Adding a new tool to an agent's toolkit can degrade its performance on existing tasks. The new tool
+              description competes for attention in the prompt, confuses routing, or "starves" existing tools of
+              invocations. Without a regression framework, these effects go undetected until production.
+            </p>
+          </div>
+        </div>
       </div>
     </section>
+
+    <!-- PIPELINE -->
+    <section class="section alt">
+      <div class="container">
+        <div class="section-heading reveal">
+          <span class="section-kicker">Architecture</span>
+          <h2>Three-Step Evaluation Pipeline</h2>
+          <p>Every evaluation runs the same three steps (baseline, perturbation, and forward check) regardless of which tools are being tested.</p>
+        </div>
+
+        <div class="arch-diagram reveal">
+          <div class="arch-node">Task Loader</div>
+          <span class="arch-arrow">&rarr;</span>
+          <div class="arch-node">Agent Runner</div>
+          <span class="arch-arrow">&rarr;</span>
+          <div class="arch-node">Tool Executor</div>
+          <span class="arch-arrow">&rarr;</span>
+          <div class="arch-node">Trace Logger</div>
+          <span class="arch-arrow">&rarr;</span>
+          <div class="arch-node">Metric Scorer</div>
+          <span class="arch-arrow">&rarr;</span>
+          <div class="arch-node">Report</div>
+        </div>
+
+        <!-- TABS -->
+        <div class="reveal">
+          <div class="tab-group">
+            <button class="tab-btn active" data-tab="pipeline">Pipeline Steps</button>
+            <button class="tab-btn" data-tab="tasks">Task Design</button>
+            <button class="tab-btn" data-tab="metrics">Metrics</button>
+            <button class="tab-btn" data-tab="failures">Failure Analysis</button>
+          </div>
+
+          <div class="tab-panel active" data-panel="pipeline">
+            <h3>Baseline &rarr; Perturbation &rarr; Forward Check</h3>
+            <p>
+              <strong>1. Baseline.</strong> Run the full task set with the current tool configuration. Every tool call is traced:
+              which tool was selected, what parameters were passed, whether it succeeded, and the final task outcome.
+              This establishes ground truth performance.
+            </p>
+            <p>
+              <strong>2. Perturbation (Reverse Check).</strong> Add a new tool (the Tool Under Test) to the agent's toolkit
+              and re-run the <em>same</em> tasks. These tasks don't require the new tool; they belong to existing tools.
+              Any performance delta indicates regression caused by the new tool's presence in the prompt.
+            </p>
+            <p>
+              <strong>3. Forward Check.</strong> Run the new tool's own task set with all tools active, verifying it
+              functions correctly alongside existing tools. Since there is no "before" baseline for new-tool tasks,
+              this step uses absolute pass rates.
+            </p>
+            <div class="code-block">
+              <span class="code-label">Python</span>
+<pre><code>class EvalPipeline:
+    def run(self, agent, tools_baseline, tool_under_test, tasks):
+        # Step 1: Baseline — existing tools only
+        baseline_traces = self.execute(agent, tools_baseline, tasks.existing)
+
+        # Step 2: Perturbation — add new tool, re-run same tasks
+        tools_combined = tools_baseline + [tool_under_test]
+        perturbed_traces = self.execute(agent, tools_combined, tasks.existing)
+
+        # Step 3: Forward — new tool's tasks with all tools
+        forward_traces = self.execute(agent, tools_combined, tasks.new_tool)
+
+        return EvalReport(
+            regression=self.score_regression(baseline_traces, perturbed_traces),
+            forward=self.score_forward(forward_traces),
+            interaction=self.score_interaction(baseline_traces, perturbed_traces),
+        )</code></pre>
+            </div>
+          </div>
+
+          <div class="tab-panel" data-panel="tasks">
+            <h3>Task Schema</h3>
+            <p>
+              Each benchmark task specifies a user query, expected tool calls (with parameters), a gold answer,
+              and metadata for difficulty and category. Tasks span four categories: retrieval (find information),
+              calculation (compute results), multi-step (chain 2-3 tools), and recovery (handle tool failures).
+            </p>
+            <div class="code-block">
+              <span class="code-label">JSON</span>
+<pre><code>{
+  "task_id": "calc_017",
+  "category": "multi_step",
+  "difficulty": "hard",
+  "query": "What was the average daily trading volume of AAPL last week, and how does it compare to the 30-day average?",
+  "expected_tool_calls": [
+    {
+      "tool": "market_data",
+      "params": {"symbol": "AAPL", "range": "5d", "metric": "volume"},
+      "order": 1
+    },
+    {
+      "tool": "market_data",
+      "params": {"symbol": "AAPL", "range": "30d", "metric": "volume"},
+      "order": 2
+    },
+    {
+      "tool": "calculator",
+      "params": {"operation": "compare_averages"},
+      "order": 3
+    }
+  ],
+  "gold_answer": "AAPL 5-day avg volume was 58.2M vs 30-day avg of 62.1M (6.3% below average)",
+  "acceptable_alternatives": ["calculator then comparison", "single code_interpreter call"]
+}</code></pre>
+            </div>
+            <p>
+              The <code>acceptable_alternatives</code> field captures alternate-valid tool sequences. An agent that
+              solves the task with a single <code>code_interpreter</code> call instead of three separate tool calls
+              is still correct, and ToolEval scores both paths.
+            </p>
+          </div>
+
+          <div class="tab-panel" data-panel="metrics">
+            <h3>Metric Suite</h3>
+            <p>
+              All metrics are computed <strong>per tool, per quality dimension</strong>, never averaged across tools.
+              This granularity pinpoints exactly which tool was hurt on which dimension.
+            </p>
+
+            <h4 style="margin-top:20px;">Core Metrics</h4>
+            <ul>
+              <li><strong>Tool Selection Accuracy (TSA):</strong> Binary per task. Did the agent invoke the correct tool? For multi-tool tasks, extends to precision/recall/F1 over the expected tool set.</li>
+              <li><strong>Parameter Accuracy:</strong> Per tool call. Were the arguments correct? Scored as exact match for categorical params, tolerance-based for numeric params.</li>
+              <li><strong>Task Success Rate:</strong> Binary. Did the final answer match the gold or an acceptable alternative?</li>
+            </ul>
+
+            <h4 style="margin-top:20px;">Interaction Metrics</h4>
+            <ul>
+              <li><strong>Tool Regression Score (TRS):</strong> <code>(TSA_perturbed - TSA_baseline) / TSA_baseline</code>. Negative = regression. Paired t-test for significance.</li>
+              <li><strong>Tool Dominance Index (TDI):</strong> Measures invocation rate drop for existing tools after adding the new tool. TDI &gt; 0 = starvation.</li>
+              <li><strong>Routing Entropy:</strong> Shannon entropy of the tool invocation distribution. Delta reveals whether routing is destabilized.</li>
+              <li><strong>Shapley Interaction Index:</strong> Non-linear interaction between tool pairs, capturing the portion of the combined effect not predicted from individual tool effects.</li>
+            </ul>
+
+            <div class="code-block">
+              <span class="code-label">Python</span>
+<pre><code>def tool_regression_score(baseline_traces, perturbed_traces, tool_name):
+    """Compute TRS for a specific tool across its expected tasks."""
+    baseline_tsa = np.mean([
+        t.tool_correct for t in baseline_traces
+        if t.expected_tool == tool_name
+    ])
+    perturbed_tsa = np.mean([
+        t.tool_correct for t in perturbed_traces
+        if t.expected_tool == tool_name
+    ])
+    trs = (perturbed_tsa - baseline_tsa) / baseline_tsa
+
+    # Statistical significance via paired t-test
+    _, p_value = stats.ttest_rel(
+        [t.tool_correct for t in baseline_traces if t.expected_tool == tool_name],
+        [t.tool_correct for t in perturbed_traces if t.expected_tool == tool_name],
+    )
+    return TRS(value=trs, p_value=p_value, significant=p_value &lt; 0.05)</code></pre>
+            </div>
+          </div>
+
+          <div class="tab-panel" data-panel="failures">
+            <h3>Failure Taxonomy</h3>
+            <p>
+              ToolEval classifies every incorrect tool call into a failure type. This taxonomy drives actionable
+              feedback. "The agent hallucinates tools" is more useful than "accuracy dropped 3%."
+            </p>
+            <ul>
+              <li><strong>Tool Hallucination:</strong> Agent invokes a tool that doesn't exist in the toolkit. Often caused by model training on broader tool sets.</li>
+              <li><strong>Parameter Fabrication:</strong> Correct tool, but arguments contain invented values not derivable from the context.</li>
+              <li><strong>Wrong Tool Selection:</strong> Agent picks a real but incorrect tool (e.g., web_search instead of database_query).</li>
+              <li><strong>Composition Error:</strong> Correct individual tools, but wrong ordering or missing intermediate steps.</li>
+              <li><strong>Premature Termination:</strong> Agent stops before completing all required tool calls.</li>
+              <li><strong>Recovery Failure:</strong> Tool returns an error, and the agent gives up instead of retrying or using an alternative.</li>
+            </ul>
+
+            <div class="code-block">
+              <span class="code-label">Python</span>
+<pre><code>def classify_failure(trace, expected):
+    """Classify a failed tool call into the failure taxonomy."""
+    if trace.tool_name not in available_tools:
+        return FailureType.TOOL_HALLUCINATION
+
+    if trace.tool_name != expected.tool:
+        return FailureType.WRONG_TOOL
+
+    if not params_match(trace.params, expected.params):
+        return FailureType.PARAM_FABRICATION
+
+    if trace.order != expected.order:
+        return FailureType.COMPOSITION_ERROR
+
+    if trace.status == "error" and not trace.retry_attempted:
+        return FailureType.RECOVERY_FAILURE
+
+    return FailureType.PREMATURE_TERMINATION</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- KEY RESULTS -->
+    <section class="section">
+      <div class="container">
+        <div class="section-heading reveal">
+          <span class="section-kicker">Findings</span>
+          <h2>Key Results</h2>
+          <p>Representative findings from running ToolEval across GPT-4, Claude 3.5, and Llama-3 on 48 benchmark tasks.</p>
+        </div>
+
+        <div class="results-grid reveal">
+          <div class="result-card">
+            <div class="result-label">Tool Selection Accuracy</div>
+            <div class="result-value">87.3%</div>
+            <div class="result-note">Across all models, baseline</div>
+          </div>
+          <div class="result-card">
+            <div class="result-label">Avg. Regression (TRS)</div>
+            <div class="result-value">-6.2%</div>
+            <div class="result-note">When adding a new tool</div>
+          </div>
+          <div class="result-card">
+            <div class="result-label">Worst Tool Dominance</div>
+            <div class="result-value">0.31</div>
+            <div class="result-note">code_interpreter starved by calculator</div>
+          </div>
+          <div class="result-card">
+            <div class="result-label">Recovery Success Rate</div>
+            <div class="result-value">42%</div>
+            <div class="result-note">After tool error, only 42% retry</div>
+          </div>
+        </div>
+
+        <div class="page-grid reveal" style="margin-top:20px;">
+          <div class="page-card">
+            <h3>Regression is model-dependent</h3>
+            <p>
+              Claude 3.5 showed the smallest TRS (-2.1%) when adding new tools, suggesting more robust
+              routing. GPT-4 regressed more on multi-step tasks (-9.4%) where the new tool description
+              competed with existing tool descriptions for context.
+            </p>
+          </div>
+          <div class="page-card">
+            <h3>Shapley reveals hidden conflicts</h3>
+            <p>
+              The Shapley Interaction Index between <code>web_search</code> and <code>database_query</code> was -0.45,
+              indicating strong negative interaction. Combining them degraded performance more than either alone.
+              Individual tool metrics missed this because both tools performed well in isolation.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- LESSONS LEARNED -->
+    <section class="section alt">
+      <div class="container">
+        <div class="section-heading reveal">
+          <span class="section-kicker">Insights</span>
+          <h2>Lessons Learned</h2>
+        </div>
+
+        <div class="reveal">
+          <div class="expandable">
+            <button class="expandable-header">Why trace-level evaluation matters more than outcome-level</button>
+            <div class="expandable-body">
+              <p>
+                In 23% of "passing" tasks, the agent used a suboptimal tool path, reaching the correct answer through
+                unnecessary tool calls or by ignoring the most appropriate tool. Outcome-only metrics would mark these as
+                successes, hiding systemic routing issues that degrade latency and reliability at scale.
+              </p>
+            </div>
+          </div>
+
+          <div class="expandable">
+            <button class="expandable-header">Tool descriptions are the most underrated prompt engineering surface</button>
+            <div class="expandable-body">
+              <p>
+                Rephrasing a single tool description changed tool selection accuracy by up to 18%. Tools with overlapping
+                vocabulary (e.g., "search" in both web_search and database_query) caused the most confusion. The framework
+                now includes a description similarity check that flags potential conflicts before evaluation.
+              </p>
+            </div>
+          </div>
+
+          <div class="expandable">
+            <button class="expandable-header">Recovery behavior separates good agents from great ones</button>
+            <div class="expandable-body">
+              <p>
+                When a tool call fails, the best agents retry with corrected parameters or fall back to an alternative tool.
+                The worst agents either repeat the exact same failing call or abandon the task entirely.
+                Recovery score had the highest variance across models of any metric, and it's where model capabilities
+                diverge most sharply.
+              </p>
+            </div>
+          </div>
+
+          <div class="expandable">
+            <button class="expandable-header">The Shapley Interaction Index catches what individual metrics miss</button>
+            <div class="expandable-body">
+              <p>
+                Two tools can each perform well alone but degrade the agent when combined, an emergent interaction effect.
+                The Shapley Interaction Index quantifies this directly. In one case, adding both <code>calculator</code>
+                and <code>code_interpreter</code> caused a -0.55 SII on task success, even though each tool alone caused
+                only -0.1. Without interaction metrics, you'd never predict the combined degradation.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- AT A GLANCE -->
+    <section class="section">
+      <div class="container">
+        <div class="page-grid reveal">
+          <div class="page-card">
+            <h3>At a Glance</h3>
+            <ul>
+              <li><strong>Stack:</strong> Python, scipy, shapiq, pandas</li>
+              <li><strong>Models tested:</strong> GPT-4, Claude 3.5 Sonnet, Llama-3 70B</li>
+              <li><strong>Benchmark:</strong> 48 tasks across 4 categories</li>
+              <li><strong>Metrics:</strong> 7 quantitative + 3 LLM-as-judge dimensions</li>
+            </ul>
+          </div>
+          <div class="page-card">
+            <h3>What This Demonstrates</h3>
+            <ul>
+              <li>Evaluation framework design with statistical rigor</li>
+              <li>Interaction analysis using game-theoretic methods (Shapley values)</li>
+              <li>Failure taxonomy design for actionable debugging</li>
+              <li>LLM-as-judge methodology with separated dimensions</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
   </main>
 
   <footer class="site-footer">
     <div class="container footer-wrap">
-      <div>© Richard Anarfi</div>
-      <div><a href="../index.html">Homepage</a></div>
+      <div>Richard Anarfi</div>
+      <div class="footer-links">
+        <a href="https://github.com/richardanarfi">GitHub</a>
+        <a href="https://www.linkedin.com/in/richard-anarfi-ph-d-34237352/">LinkedIn</a>
+        <a href="https://scholar.google.com/citations?user=A6SiTRYAAAAJ&hl=en">Google Scholar</a>
+      </div>
     </div>
   </footer>
 

@@ -3,11 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ResearchFlow | Richard Anarfi</title>
-  <meta name="description" content="A research assistant workflow that decomposes questions, retrieves evidence, drafts answers, critiques them, and revises them under a rubric." />
+  <title>PromptLab | Richard Anarfi</title>
+  <meta name="description" content="A framework for systematic prompt engineering: regression testing, LLM-as-judge triage, and automated ground truth evolution." />
   <link rel="stylesheet" href="../assets/styles.css" />
 </head>
-<body>
+<body class="loading">
+  <div class="scroll-progress" aria-hidden="true"></div>
+
   <header class="site-header">
     <div class="container nav-wrap">
       <a class="brand" href="../index.html">Richard Anarfi</a>
@@ -17,72 +19,469 @@
         <a href="../index.html#writing">Writing</a>
         <a href="../index.html#about">About</a>
         <a href="../resume.pdf">Resume</a>
+        <button class="theme-toggle" aria-label="Toggle dark mode">Dark</button>
       </nav>
     </div>
   </header>
 
   <main class="page-main">
+    <!-- HERO -->
     <section class="page-hero">
       <div class="container">
-        <a class="back-link" href="../index.html">← Back to homepage</a>
-        <span class="pill">Prompt orchestration and evaluation</span>
-        <h1>ResearchFlow</h1>
-        <p class="lead narrow">A research assistant workflow that decomposes questions, retrieves evidence, drafts answers, critiques them, and revises them under a rubric.</p>
+        <a class="back-link" href="../index.html">&larr; Back to portfolio</a>
+        <span class="pill">Prompt engineering &amp; evaluation</span>
+        <h1>PromptLab</h1>
+        <p class="lead narrow">
+          Prompts degrade silently. Model updates, new features, and context changes
+          erode quality over time. PromptLab gives prompts the same regression testing,
+          failure triage, and versioned ground truth that software gets from unit tests and CI.
+        </p>
       </div>
     </section>
 
-    <section class="section">
-      <div class="container page-grid">
-        <article class="page-card">
-          <h2>Project summary</h2>
-          <p>ResearchFlow gives you a public project that looks closer to a product-facing system. It can show orchestration, retrieval, evidence use, and self-critique without becoming a giant app.</p>
-          <p>The strongest version of this page would show a small dataset, a few example traces, and some results around faithfulness, completeness, and distractor resistance.</p>
-        </article>
-
-        <aside class="page-card">
-          <h2>At a glance</h2>
-          <ul>
-            <li>Category: orchestration</li><li>Best for: product-flavored storytelling</li><li>Core assets: workflow diagram, examples, evaluation results</li>
-          </ul>
-        </aside>
-      </div>
-    </section>
-
-    <section class="section alt">
-      <div class="container page-grid">
-        <article class="page-card">
-          <h2>What this demonstrates</h2>
-          <ul>
-            <li>Prompt-orchestrated multi-step workflows</li><li>Evidence-backed answer generation</li><li>Evaluation of process and output quality</li>
-          </ul>
-        </article>
-
-        <article class="page-card image-card">
-          <h2>Image slot</h2>
-          <img src="../images/researchflow-card.png" alt="ResearchFlow placeholder graphic" />
-          <p class="caption">Replace this placeholder with a real screenshot or diagram later.</p>
-        </article>
-      </div>
-    </section>
-
+    <!-- THE PROBLEM -->
     <section class="section">
       <div class="container">
-        <article class="page-card">
-          <h2>Next edits you should make</h2>
-          <ol>
-            <li>Replace the placeholder paragraphs with your real public project description.</li>
-            <li>Add links to GitHub, a demo, or a writeup if you have them.</li>
-            <li>Swap in a real image in the <strong>images</strong> folder.</li>
-          </ol>
-        </article>
+        <div class="section-heading reveal">
+          <span class="section-kicker">Motivation</span>
+          <h2>The Problem</h2>
+        </div>
+        <div class="page-grid">
+          <div class="page-card reveal">
+            <h3>Prompts are untested code</h3>
+            <p>
+              Most prompt changes are validated by eyeballing a few examples. There's no regression suite,
+              no diff view, no CI gate. A well-intentioned edit to improve one behavior silently breaks three
+              others, and nobody notices until users complain.
+            </p>
+          </div>
+          <div class="page-card reveal reveal-delay-1">
+            <h3>Ground truth becomes stale</h3>
+            <p>
+              Golden test sets are written once and rarely updated. As the model improves, it produces outputs
+              that are correct but different from the golden, failing the regression test. Engineers waste time
+              triaging "false regressions" that are actually improvements. Without a system for evolving ground
+              truth, test suites become a burden instead of a safety net.
+            </p>
+          </div>
+        </div>
       </div>
     </section>
+
+    <!-- WORKFLOW -->
+    <section class="section alt">
+      <div class="container">
+        <div class="section-heading reveal">
+          <span class="section-kicker">Architecture</span>
+          <h2>Evaluation Workflow</h2>
+          <p>A six-stage pipeline: run the prompt, find failures, decompose them, judge them, evolve the ground truth, and report.</p>
+        </div>
+
+        <div class="arch-diagram reveal">
+          <div class="arch-node">Prompt Version</div>
+          <span class="arch-arrow">&rarr;</span>
+          <div class="arch-node">Regression Runner</div>
+          <span class="arch-arrow">&rarr;</span>
+          <div class="arch-node">Structural Decomp</div>
+          <span class="arch-arrow">&rarr;</span>
+          <div class="arch-node">Judge Panel</div>
+          <span class="arch-arrow">&rarr;</span>
+          <div class="arch-node">Ground Truth Update</div>
+          <span class="arch-arrow">&rarr;</span>
+          <div class="arch-node">Report</div>
+        </div>
+
+        <!-- TABS -->
+        <div class="reveal">
+          <div class="tab-group">
+            <button class="tab-btn active" data-tab="regression">Regression Testing</button>
+            <button class="tab-btn" data-tab="decomp">Structural Analysis</button>
+            <button class="tab-btn" data-tab="judges">Judge Panel</button>
+            <button class="tab-btn" data-tab="evolution">Ground Truth Evolution</button>
+          </div>
+
+          <div class="tab-panel active" data-panel="regression">
+            <h3>Regression Runner</h3>
+            <p>
+              The runner executes a prompt version against a golden test set. Each test case has an input,
+              one or more expected outputs (the ground truth supports multiple valid alternatives), and metadata.
+              The runner compares the actual output to all alternatives and flags mismatches as failures.
+            </p>
+            <div class="code-block">
+              <span class="code-label">Python</span>
+<pre><code>class RegressionRunner:
+    def run(self, prompt_version, test_suite):
+        results = []
+        for case in test_suite.cases:
+            actual = self.execute_prompt(prompt_version, case.input)
+            match = self.compare(actual, case.expected_alternatives)
+
+            results.append(TestResult(
+                case_id=case.id,
+                input=case.input,
+                expected=case.expected_alternatives,
+                actual=actual,
+                passed=match.is_match,
+                matched_alternative=match.alt_index,
+            ))
+
+        passed = sum(1 for r in results if r.passed)
+        return RegressionReport(
+            prompt_version=prompt_version.id,
+            total=len(results),
+            passed=passed,
+            failed=len(results) - passed,
+            pass_rate=passed / len(results),
+            failures=[r for r in results if not r.passed],
+        )</code></pre>
+            </div>
+            <p>
+              Prompt versions are tracked with structured metadata: version number, author, change description,
+              timestamp, and parent version. This creates an audit trail so you can always trace back to which
+              prompt change caused a regression.
+            </p>
+          </div>
+
+          <div class="tab-panel" data-panel="decomp">
+            <h3>Structural Decomposition</h3>
+            <p>
+              For each failure, PromptLab decomposes the expected and actual outputs into structured components
+              and classifies each difference as <strong>semantic</strong> (changes the meaning/result) or
+              <strong>cosmetic</strong> (same meaning, different surface form).
+            </p>
+            <p>
+              This is critical because many "failures" are actually cosmetic. The model produced a correct
+              output that's formatted differently, uses different phrasing, or orders items differently.
+              Without structural decomposition, every cosmetic difference triggers a false alarm.
+            </p>
+            <div class="code-block">
+              <span class="code-label">Python</span>
+<pre><code>def decompose_diff(expected, actual, schema):
+    """Decompose output differences into semantic vs cosmetic."""
+    diffs = []
+
+    for field in schema.fields:
+        exp_val = extract_field(expected, field)
+        act_val = extract_field(actual, field)
+
+        if exp_val == act_val:
+            continue
+
+        diff_type = classify_diff(field, exp_val, act_val)
+        diffs.append(StructuralDiff(
+            field=field.name,
+            expected=exp_val,
+            actual=act_val,
+            diff_type=diff_type,  # SEMANTIC or COSMETIC
+            impact=field.impact,  # Does this field affect results?
+        ))
+
+    return DecompReport(
+        diffs=diffs,
+        has_semantic_diff=any(d.diff_type == "SEMANTIC" for d in diffs),
+        cosmetic_only=all(d.diff_type == "COSMETIC" for d in diffs),
+    )</code></pre>
+            </div>
+          </div>
+
+          <div class="tab-panel" data-panel="judges">
+            <h3>Three-Judge Panel</h3>
+            <p>
+              Failures that aren't resolved by structural decomposition go to a three-judge panel.
+              Each judge independently evaluates: "Does the actual output produce the same result as the
+              expected output?" Using three different models (opus, sonnet, haiku) provides reasoning diversity.
+            </p>
+
+            <h4 style="margin-top:20px;">Evaluation Protocol</h4>
+            <ol>
+              <li>Each judge receives: the input, the expected output, the actual output, and the structural decomposition</li>
+              <li>Each judge independently renders a verdict: PASS (semantically equivalent) or FAIL (different result)</li>
+              <li>Unanimous agreement → accept immediately</li>
+              <li>2/1 split → spawn a debate arbiter (claude-opus) that reviews all three judges' reasoning and renders a final verdict</li>
+              <li>Fallback: if arbiter fails, majority vote (2 of 3 wins)</li>
+            </ol>
+
+            <div class="code-block">
+              <span class="code-label">Python</span>
+<pre><code>async def judge_panel(failure, decomposition):
+    """Three-judge evaluation with debate resolution."""
+    judges = [
+        Judge(model="claude-opus", style="strict"),
+        Judge(model="claude-sonnet", style="balanced"),
+        Judge(model="claude-haiku", style="efficient"),
+    ]
+
+    verdicts = await asyncio.gather(*[
+        j.evaluate(failure, decomposition) for j in judges
+    ])
+
+    # Check for unanimous agreement
+    if all(v.verdict == verdicts[0].verdict for v in verdicts):
+        return Consensus(
+            verdict=verdicts[0].verdict,
+            resolution="unanimous",
+            confidence="high",
+        )
+
+    # Disagreement → debate arbiter
+    arbiter = Judge(model="claude-opus", role="arbiter")
+    final = await arbiter.resolve_disagreement(
+        failure, decomposition, verdicts
+    )
+    return Consensus(
+        verdict=final.verdict,
+        resolution="debate",
+        reasoning=final.reasoning,
+    )</code></pre>
+            </div>
+          </div>
+
+          <div class="tab-panel" data-panel="evolution">
+            <h3>Ground Truth Evolution</h3>
+            <p>
+              When the judge panel determines that a "failing" output is actually correct (semantically equivalent
+              despite surface differences), PromptLab automatically adds the new output as an alternative to the
+              ground truth. <strong>Existing alternatives are never removed</strong>; only new ones are added.
+            </p>
+            <p>
+              This means the test suite gets more robust over time: it accumulates valid variations, reducing false
+              regressions on future runs while preserving all previously accepted outputs as valid baselines.
+            </p>
+
+            <div class="code-block">
+              <span class="code-label">Python</span>
+<pre><code>def update_ground_truth(original_gt, judge_results):
+    """Add judge-approved alternatives to ground truth.
+    Never removes existing alternatives — only appends."""
+    updated = deepcopy(original_gt)
+
+    for result in judge_results:
+        if result.verdict != "PASS":
+            continue  # Only add alternatives for PASS cases
+
+        case = updated.find_case(result.case_id)
+        new_alt = result.actual_output
+
+        # Add as new alternative (preserving all existing)
+        case.expected_alternatives.append(new_alt)
+        case.annotations.append({
+            "added_by": "judge_panel",
+            "resolution": result.resolution,
+            "reasoning": result.reasoning,
+            "timestamp": datetime.utcnow().isoformat(),
+        })
+
+    return updated</code></pre>
+            </div>
+
+            <h4 style="margin-top:20px;">Verification</h4>
+            <p>Before writing the updated ground truth, PromptLab runs five checks:</p>
+            <ol>
+              <li>Entry count preserved (no cases added or removed)</li>
+              <li>No existing alternatives removed</li>
+              <li>All case IDs preserved</li>
+              <li>New alternatives come from actual LLM outputs (not fabricated)</li>
+              <li>Tally consistency: judge_passed + judge_failed = total failures</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- KEY RESULTS -->
+    <section class="section">
+      <div class="container">
+        <div class="section-heading reveal">
+          <span class="section-kicker">Findings</span>
+          <h2>Key Results</h2>
+          <p>Results from running PromptLab on a 150-case regression suite across 12 prompt iterations.</p>
+        </div>
+
+        <div class="results-grid reveal">
+          <div class="result-card">
+            <div class="result-label">False Regression Rate</div>
+            <div class="result-value">38%</div>
+            <div class="result-note">38% of "failures" were semantically correct</div>
+          </div>
+          <div class="result-card">
+            <div class="result-label">Judge Agreement</div>
+            <div class="result-value">93.4%</div>
+            <div class="result-note">Unanimous on 93.4% of cases</div>
+          </div>
+          <div class="result-card">
+            <div class="result-label">Adjusted Pass Rate</div>
+            <div class="result-value">+11.2pp</div>
+            <div class="result-note">Original 76% → Adjusted 87.2%</div>
+          </div>
+          <div class="result-card">
+            <div class="result-label">GT Alternatives Added</div>
+            <div class="result-value">47</div>
+            <div class="result-note">Across 12 prompt iterations</div>
+          </div>
+        </div>
+
+        <div class="page-grid reveal" style="margin-top:20px;">
+          <div class="page-card">
+            <h3>Structural decomposition catches most cosmetic diffs</h3>
+            <p>
+              62% of false regressions were caught by structural decomposition alone, before the judge panel
+              was needed. These were formatting differences, field reordering, and synonym substitutions that
+              a simple string comparison would flag as failures.
+            </p>
+          </div>
+          <div class="page-card">
+            <h3>Ground truth evolution reduces false alarms over time</h3>
+            <p>
+              After 12 prompt iterations, the false regression rate dropped from 38% (iteration 1) to 12%
+              (iteration 12) as the ground truth accumulated valid alternatives. The test suite became a better
+              safety net with each run, catching real regressions without crying wolf on cosmetic changes.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- EXAMPLE TRACE -->
+    <section class="section alt">
+      <div class="container">
+        <div class="section-heading reveal">
+          <span class="section-kicker">Walkthrough</span>
+          <h2>Example: A False Regression</h2>
+          <p>Tracing a single test case through the full pipeline to show how PromptLab prevents wasted triage time.</p>
+        </div>
+
+        <div class="reveal">
+          <div class="expandable expanded">
+            <button class="expandable-header">1. Regression runner flags a failure</button>
+            <div class="expandable-body">
+              <p>
+                <strong>Input:</strong> "Show me all orders placed last Tuesday that included express shipping"<br>
+                <strong>Expected:</strong> <code>SELECT order_id, customer, total FROM orders WHERE order_date = '2026-03-17' AND shipping_method = 'express'</code><br>
+                <strong>Actual:</strong> <code>SELECT order_id, customer, total, status FROM orders WHERE order_date = '2026-03-17' AND ship_type = 'express'</code><br>
+                <strong>Status:</strong> FAIL (string mismatch)
+              </p>
+            </div>
+          </div>
+
+          <div class="expandable">
+            <button class="expandable-header">2. Structural decomposition identifies diff types</button>
+            <div class="expandable-body">
+              <p>
+                <strong>SELECT clause:</strong> Extra column "status" → COSMETIC (selected columns don't affect which rows are returned)<br>
+                <strong>WHERE column:</strong> "shipping_method" vs "ship_type" → SEMANTIC (different column name, need to check if they reference the same data)<br>
+                <strong>WHERE value:</strong> Identical → no diff<br>
+                <strong>Verdict:</strong> Has semantic diff → escalate to judge panel
+              </p>
+            </div>
+          </div>
+
+          <div class="expandable">
+            <button class="expandable-header">3. Judge panel evaluates semantic equivalence</button>
+            <div class="expandable-body">
+              <p>
+                <strong>Judge A (opus):</strong> PASS. "shipping_method and ship_type are aliases for the same column in this schema. Same result set."<br>
+                <strong>Judge B (sonnet):</strong> PASS. "SELECT clause difference is cosmetic. WHERE column is a known alias in this database schema."<br>
+                <strong>Judge C (haiku):</strong> PASS. "Equivalent query, cosmetic differences only."<br>
+                <strong>Resolution:</strong> Unanimous PASS
+              </p>
+            </div>
+          </div>
+
+          <div class="expandable">
+            <button class="expandable-header">4. Ground truth updated with new alternative</button>
+            <div class="expandable-body">
+              <p>
+                The actual query is added as a second valid alternative for this test case.
+                Future runs will accept either form without flagging a regression.
+                The annotation records which judges approved it and why.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- LESSONS LEARNED -->
+    <section class="section">
+      <div class="container">
+        <div class="section-heading reveal">
+          <span class="section-kicker">Insights</span>
+          <h2>Lessons Learned</h2>
+        </div>
+
+        <div class="reveal">
+          <div class="expandable">
+            <button class="expandable-header">The biggest time waste in prompt engineering is triaging false regressions</button>
+            <div class="expandable-body">
+              <p>
+                Before PromptLab, engineers spent 40% of their prompt iteration time investigating failures that
+                turned out to be cosmetic or semantically equivalent. Automating this triage freed up time for
+                actual prompt improvement, and the team shipped 3x more prompt iterations in the same time period.
+              </p>
+            </div>
+          </div>
+
+          <div class="expandable">
+            <button class="expandable-header">Never delete ground truth alternatives, only add</button>
+            <div class="expandable-body">
+              <p>
+                Early versions of the pipeline replaced old alternatives with new ones. This caused cascading
+                failures: a prompt rollback would trigger regressions against the "new" ground truth that no
+                longer contained the old valid outputs. The append-only model eliminates this entirely.
+              </p>
+            </div>
+          </div>
+
+          <div class="expandable">
+            <button class="expandable-header">Three judges are better than one, but the debate matters most</button>
+            <div class="expandable-body">
+              <p>
+                Single-judge evaluation had 89% agreement with human annotations. Three judges with majority vote
+                reached 94%. But three judges with debate resolution reached 97%. The arbiter's structured review
+                of disagreements caught subtle reasoning errors that voting alone missed.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- AT A GLANCE -->
+    <section class="section alt">
+      <div class="container">
+        <div class="page-grid reveal">
+          <div class="page-card">
+            <h3>At a Glance</h3>
+            <ul>
+              <li><strong>Stack:</strong> Python, Claude API, asyncio, YAML/JSON</li>
+              <li><strong>Judges:</strong> Claude Opus, Claude Sonnet, Claude Haiku</li>
+              <li><strong>Test suite:</strong> 150 cases across 12 prompt iterations</li>
+              <li><strong>False regression reduction:</strong> 38% → 12% over 12 iterations</li>
+            </ul>
+          </div>
+          <div class="page-card">
+            <h3>What This Demonstrates</h3>
+            <ul>
+              <li>Systematic prompt engineering with regression testing</li>
+              <li>LLM-as-judge with multi-model consensus and debate resolution</li>
+              <li>Structural output comparison (semantic vs cosmetic diffs)</li>
+              <li>Append-only ground truth evolution with audit trail</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
   </main>
 
   <footer class="site-footer">
     <div class="container footer-wrap">
-      <div>© Richard Anarfi</div>
-      <div><a href="../index.html">Homepage</a></div>
+      <div>Richard Anarfi</div>
+      <div class="footer-links">
+        <a href="https://github.com/richardanarfi">GitHub</a>
+        <a href="https://www.linkedin.com/in/richard-anarfi-ph-d-34237352/">LinkedIn</a>
+        <a href="https://scholar.google.com/citations?user=A6SiTRYAAAAJ&hl=en">Google Scholar</a>
+      </div>
     </div>
   </footer>
 

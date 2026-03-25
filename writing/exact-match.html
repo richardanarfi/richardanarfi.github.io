@@ -4,10 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Why exact-match metrics fail for LLM systems | Richard Anarfi</title>
-  <meta name="description" content="A short essay on alternate-valid answers, rubric-based evaluation, and why exact match often under-measures realistic LLM behavior." />
+  <meta name="description" content="Alternate-valid answers, rubric-based evaluation, and why exact match systematically under-measures real LLM capability." />
   <link rel="stylesheet" href="../assets/styles.css" />
 </head>
-<body>
+<body class="loading">
+  <div class="scroll-progress" aria-hidden="true"></div>
+
   <header class="site-header">
     <div class="container nav-wrap">
       <a class="brand" href="../index.html">Richard Anarfi</a>
@@ -17,6 +19,7 @@
         <a href="../index.html#writing">Writing</a>
         <a href="../index.html#about">About</a>
         <a href="../resume.pdf">Resume</a>
+        <button class="theme-toggle" aria-label="Toggle dark mode">Dark</button>
       </nav>
     </div>
   </header>
@@ -24,25 +27,56 @@
   <main class="page-main">
     <section class="page-hero">
       <div class="container">
-        <a class="back-link" href="../index.html">← Back to homepage</a>
-        <span class="pill">Technical essay</span>
+        <a class="back-link" href="../index.html">&larr; Back to portfolio</a>
+        <span class="pill">Writing</span>
         <h1>Why exact-match metrics fail for LLM systems</h1>
-        <p class="lead narrow">A short essay on alternate-valid answers, rubric-based evaluation, and why exact match often under-measures realistic LLM behavior.</p>
+        <p class="lead narrow">Alternate-valid answers, rubric-based evaluation, and why exact match systematically under-measures real LLM capability.</p>
       </div>
     </section>
 
     <section class="section">
       <div class="container">
-        <article class="page-card prose">
-          
-<h2>Why this matters</h2>
-<p>Exact match feels objective, but it often underestimates real capability in LLM systems. Many realistic tasks allow multiple correct answers, multiple correct phrasings, or multiple correct reasoning paths.</p>
-<h2>The failure mode</h2>
-<p>When the benchmark expects one exact string, a model can be correct and still be marked wrong. That creates noisy metrics and hides meaningful improvements.</p>
-<h2>A better direction</h2>
-<p>Use exact checks where they truly fit, but add alternate-valid answers, structured assertions, and rubric-based judging for tasks that involve natural language ambiguity.</p>
-<h2>What a good benchmark does</h2>
-<p>A good benchmark separates deterministic tasks from open-ended tasks and chooses the evaluation method accordingly.</p>
+        <article class="page-card prose reveal">
+
+<h2>The appeal of exact match</h2>
+<p>Exact match is the simplest evaluation metric: does the model's output exactly equal the expected answer? It's deterministic, cheap to compute, and easy to explain. For tasks with a single correct answer (what is 2+2?), it works perfectly. The problem is that most interesting LLM tasks don't have a single correct answer.</p>
+
+<h2>Where it breaks down</h2>
+<p>Consider a simple question: "Who is the CEO of Anthropic?" The golden answer in your test set says "Dario Amodei." The model outputs "Dario Amodei is the CEO of Anthropic." Exact match: fail. The model gave a correct, complete answer, but because it included extra context, it gets zero credit.</p>
+
+<p>This isn't a contrived example. It happens constantly in production evaluation. A model generates a SQL query that returns the same rows but uses a column alias instead of the raw column name. A model writes a summary that covers all the key points but reorders them. A model answers a math problem correctly but shows its work in a different format. In all these cases, exact match says "wrong" when the output is correct.</p>
+
+<p>The damage compounds at scale. If 15-20% of correct outputs are marked as failures due to surface-level differences, your metrics are systematically pessimistic. You can't trust your pass rate. You can't tell whether a prompt change actually helped or whether the delta is just noise from formatting variation. Engineers waste time triaging "regressions" that are actually correct outputs in a different form.</p>
+
+<h2>Alternate-valid answers</h2>
+<p>The first fix is to support multiple valid answers per test case. Instead of one golden string, store an array of acceptable outputs. When the model produces a new correct variant, add it to the list. Over time, the test set accumulates valid alternatives and the false-failure rate drops.</p>
+
+<p>This is straightforward to implement but hard to maintain. Somebody has to decide which alternatives are valid. In my experience building evaluation pipelines, the initial test set has one alternative per case, and after a few months of iteration you end up with 3-5 alternatives per case. The maintenance burden grows linearly with the number of test cases and the number of prompt iterations. You need a system for this, not a manual process.</p>
+
+<h2>Structured assertions</h2>
+<p>A better approach for structured outputs (SQL, JSON, API calls) is to evaluate the output's structure rather than its string representation. Two SQL queries are equivalent if they return the same result set, regardless of column ordering, aliasing, or whitespace. Two JSON objects are equivalent if they have the same keys and values, regardless of key ordering.</p>
+
+<p>This requires a decomposition step: parse the output into its structural components, then compare each component semantically. For a SQL query, that means comparing the WHERE clause conditions (do they filter the same rows?), the SELECT columns (cosmetic difference, doesn't affect results), and the JOIN structure (changes the result set). A difference in SELECT columns is cosmetic. A difference in WHERE conditions is semantic. This distinction matters because it's the difference between a false alarm and a real regression.</p>
+
+<h2>Rubric-based judging</h2>
+<p>For open-ended outputs (summaries, explanations, conversational responses), neither exact match nor structural comparison works. The output space is too large and too varied. Here, rubric-based evaluation with an LLM judge is the practical answer.</p>
+
+<p>A rubric defines 3-5 evaluation dimensions with explicit criteria for each score level. For a summary task, the dimensions might be: faithfulness (are all claims supported by the source?), completeness (are all key points covered?), coherence (does it read well?), and conciseness (is it appropriately brief?). Each dimension gets a 1-5 score with concrete anchors for what each level means.</p>
+
+<p>The critical implementation detail is to use separate judges for separate dimensions. A single judge scoring all dimensions at once exhibits anchor bias, where a low score on one dimension drags down scores on others. Running independent judges per dimension eliminates this and produces more reliable scores.</p>
+
+<p>Using multiple judge models (e.g., running the same rubric through three different models) adds another layer of reliability. When all three judges agree, you can trust the score. When they disagree, you have a signal that the case is ambiguous and may need human review. In practice, three-judge panels with debate resolution for disagreements reach 96-97% agreement with human annotators, compared to 89% for a single judge.</p>
+
+<h2>When to use what</h2>
+<p>The right evaluation method depends on the task:</p>
+
+<ul>
+  <li><strong>Exact match</strong> works for tasks with truly unique answers: math with integer results, classification labels, boolean yes/no. Use it where it fits because it's fast and deterministic.</li>
+  <li><strong>Alternate-valid with structural comparison</strong> works for structured outputs (SQL, API calls, JSON, tool call sequences) where equivalence can be defined programmatically.</li>
+  <li><strong>Rubric-based LLM judging</strong> is necessary for open-ended generation where the output space is too large to enumerate.</li>
+</ul>
+
+<p>The mistake most teams make is using exact match for everything because it's easy to set up, then wondering why their metrics are noisy and their engineers spend half their time triaging false failures. The investment in proper evaluation infrastructure pays for itself quickly: less wasted triage time, more trustworthy metrics, and faster iteration cycles.</p>
 
         </article>
       </div>
@@ -51,8 +85,12 @@
 
   <footer class="site-footer">
     <div class="container footer-wrap">
-      <div>© Richard Anarfi</div>
-      <div><a href="../index.html">Homepage</a></div>
+      <div>Richard Anarfi</div>
+      <div class="footer-links">
+        <a href="https://github.com/richardanarfi">GitHub</a>
+        <a href="https://www.linkedin.com/in/richard-anarfi-ph-d-34237352/">LinkedIn</a>
+        <a href="https://scholar.google.com/citations?user=A6SiTRYAAAAJ&hl=en">Google Scholar</a>
+      </div>
     </div>
   </footer>
 
