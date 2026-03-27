@@ -100,24 +100,27 @@
                 and interaction effects between tools using Shapley-based metrics.
               </p>
               <ul>
-                <li>Three-step pipeline: baseline, perturbation, forward check</li>
-                <li>Metrics: tool regression score, dominance index, routing entropy</li>
-                <li>LLM-as-judge panel for synthesis quality and tool bleed</li>
+                <li>Four-step pipeline: existing baseline, new tool baseline, reverse check, forward check</li>
+                <li>Bidirectional regression: reverse RRS + forward RRS with statistical significance</li>
+                <li>Interaction metrics: dominance index, routing entropy, Shapley interaction</li>
               </ul>
               <a class="text-link" href="projects/agenteval.html">Open project page &rarr;</a>
+              <a class="text-link" href="https://github.com/richardanarfi/tooleval" style="margin-left:16px;">GitHub repo &rarr;</a>
             </div>
             <div class="project-visual card-visual">
               <div class="cv-pipeline">
-                <span class="cv-node">Baseline</span>
+                <span class="cv-node">Existing BL</span>
                 <span class="cv-arrow">&rarr;</span>
-                <span class="cv-node">Perturbation</span>
+                <span class="cv-node">New Tool BL</span>
+                <span class="cv-arrow">&rarr;</span>
+                <span class="cv-node">Reverse</span>
                 <span class="cv-arrow">&rarr;</span>
                 <span class="cv-node">Forward</span>
               </div>
               <div class="cv-code">
-                <span class="kw">def</span> <span class="fn">tool_regression_score</span>(baseline, perturbed):<br>
-                &nbsp;&nbsp;trs = (perturbed_tsa - baseline_tsa) / baseline_tsa<br>
-                &nbsp;&nbsp;<span class="kw">return</span> TRS(value=trs, significant=p &lt; <span class="str">0.05</span>)
+                <span class="kw">def</span> <span class="fn">regression_score</span>(baseline, check):<br>
+                &nbsp;&nbsp;rrs = (check_score - baseline_score) / baseline_score<br>
+                &nbsp;&nbsp;<span class="kw">return</span> RRS(value=rrs, significant=p &lt; <span class="str">0.05</span>)
               </div>
               <div class="cv-metrics">
                 <div class="cv-metric"><div class="cv-metric-val">87%</div><div class="cv-metric-label">TSA</div></div>
