@@ -72,8 +72,8 @@
       <div class="container">
         <div class="section-heading reveal">
           <span class="section-kicker">Architecture</span>
-          <h2>Three-Step Evaluation Pipeline</h2>
-          <p>Every evaluation runs the same three steps (baseline, perturbation, and forward check) regardless of which tools are being tested.</p>
+          <h2>Four-Step Evaluation Pipeline</h2>
+          <p>Every evaluation runs the same four steps (existing baseline, new tool baseline, reverse check, and forward check) regardless of which tools are being tested.</p>
         </div>
 
         <div class="arch-diagram reveal">
@@ -100,40 +100,47 @@
           </div>
 
           <div class="tab-panel active" data-panel="pipeline">
-            <h3>Baseline &rarr; Perturbation &rarr; Forward Check</h3>
+            <h3>Existing Baseline &rarr; New Tool Baseline &rarr; Reverse Check &rarr; Forward Check</h3>
             <p>
-              <strong>1. Baseline.</strong> Run the full task set with the current tool configuration. Every tool call is traced:
+              <strong>1. Existing Baseline.</strong> Run the existing task set with existing tools only. Every tool call is traced:
               which tool was selected, what parameters were passed, whether it succeeded, and the final task outcome.
-              This establishes ground truth performance.
+              This establishes ground truth for existing tool performance.
             </p>
             <p>
-              <strong>2. Perturbation (Reverse Check).</strong> Add a new tool (the Tool Under Test) to the agent's toolkit
-              and re-run the <em>same</em> tasks. These tasks don't require the new tool; they belong to existing tools.
-              Any performance delta indicates regression caused by the new tool's presence in the prompt.
+              <strong>2. New Tool Baseline.</strong> Run the new tool's task set with <em>only</em> the new tool active.
+              This isolates the new tool's quality before other tools can interfere, establishing the ground truth
+              needed to compute Forward RRS in Step 4.
             </p>
             <p>
-              <strong>3. Forward Check.</strong> Run the new tool's own task set with all tools active, verifying it
-              functions correctly alongside existing tools. Since there is no "before" baseline for new-tool tasks,
-              this step uses absolute pass rates.
+              <strong>3. Reverse Check.</strong> Add the new tool to the existing toolkit and re-run the <em>existing</em> tasks.
+              Any performance delta against Step 1 indicates regression caused by the new tool's presence in the prompt.
+            </p>
+            <p>
+              <strong>4. Forward Check.</strong> Run the new tool's task set with all tools active. Comparing against
+              Step 2 reveals whether existing tools degrade the new tool's performance — the reverse direction
+              of regression that a 3-step pipeline would miss entirely.
             </p>
             <div class="code-block">
               <span class="code-label">Python</span>
 <pre><code>class EvalPipeline:
-    def run(self, agent, tools_baseline, tool_under_test, tasks):
-        # Step 1: Baseline — existing tools only
-        baseline_traces = self.execute(agent, tools_baseline, tasks.existing)
+    def run(self, agent, tools_existing, tool_under_test, tasks):
+        # Step 1: Existing Baseline — existing tools only
+        baseline_traces = self.execute(agent, tools_existing, tasks.existing)
 
-        # Step 2: Perturbation — add new tool, re-run same tasks
-        tools_combined = tools_baseline + [tool_under_test]
-        perturbed_traces = self.execute(agent, tools_combined, tasks.existing)
+        # Step 2: New Tool Baseline — new tool in isolation
+        new_baseline_traces = self.execute(agent, [tool_under_test], tasks.new_tool)
 
-        # Step 3: Forward — new tool's tasks with all tools
+        # Step 3: Reverse Check — all tools, existing tasks
+        tools_combined = tools_existing + [tool_under_test]
+        reverse_traces = self.execute(agent, tools_combined, tasks.existing)
+
+        # Step 4: Forward Check — all tools, new tool's tasks
         forward_traces = self.execute(agent, tools_combined, tasks.new_tool)
 
         return EvalReport(
-            regression=self.score_regression(baseline_traces, perturbed_traces),
-            forward=self.score_forward(forward_traces),
-            interaction=self.score_interaction(baseline_traces, perturbed_traces),
+            reverse=self.score_regression(baseline_traces, reverse_traces),
+            forward=self.score_regression(new_baseline_traces, forward_traces),
+            interaction=self.score_interaction(baseline_traces, reverse_traces),
         )</code></pre>
             </div>
           </div>
@@ -194,9 +201,15 @@
               <li><strong>Task Success Rate:</strong> Binary. Did the final answer match the gold or an acceptable alternative?</li>
             </ul>
 
+            <h4 style="margin-top:20px;">Regression Metrics</h4>
+            <ul>
+              <li><strong>Reverse RRS:</strong> <code>(score_step3 - score_step1) / score_step1</code>. Did the new tool hurt existing tools? Paired t-test for significance.</li>
+              <li><strong>Forward RRS:</strong> <code>(score_step4 - score_step2) / score_step2</code>. Did existing tools hurt the new tool? Only possible with the isolated Step 2 baseline.</li>
+              <li><strong>Pass-to-Fail Flip Count:</strong> Binary regression detection in both directions — counts tasks that passed at baseline but fail after configuration change.</li>
+            </ul>
+
             <h4 style="margin-top:20px;">Interaction Metrics</h4>
             <ul>
-              <li><strong>Tool Regression Score (TRS):</strong> <code>(TSA_perturbed - TSA_baseline) / TSA_baseline</code>. Negative = regression. Paired t-test for significance.</li>
               <li><strong>Tool Dominance Index (TDI):</strong> Measures invocation rate drop for existing tools after adding the new tool. TDI &gt; 0 = starvation.</li>
               <li><strong>Routing Entropy:</strong> Shannon entropy of the tool invocation distribution. Delta reveals whether routing is destabilized.</li>
               <li><strong>Shapley Interaction Index:</strong> Non-linear interaction between tool pairs, capturing the portion of the combined effect not predicted from individual tool effects.</li>
@@ -204,24 +217,22 @@
 
             <div class="code-block">
               <span class="code-label">Python</span>
-<pre><code>def tool_regression_score(baseline_traces, perturbed_traces, tool_name):
-    """Compute TRS for a specific tool across its expected tasks."""
-    baseline_tsa = np.mean([
+<pre><code>def regression_score(baseline_traces, check_traces, tool_name):
+    """Compute RRS for a specific tool. Works for both directions:
+       Reverse (Step 1 vs 3) and Forward (Step 2 vs 4)."""
+    baseline_scores = [
         t.tool_correct for t in baseline_traces
         if t.expected_tool == tool_name
-    ])
-    perturbed_tsa = np.mean([
-        t.tool_correct for t in perturbed_traces
+    ]
+    check_scores = [
+        t.tool_correct for t in check_traces
         if t.expected_tool == tool_name
-    ])
-    trs = (perturbed_tsa - baseline_tsa) / baseline_tsa
+    ]
+    rrs = (np.mean(check_scores) - np.mean(baseline_scores)) / np.mean(baseline_scores)
 
     # Statistical significance via paired t-test
-    _, p_value = stats.ttest_rel(
-        [t.tool_correct for t in baseline_traces if t.expected_tool == tool_name],
-        [t.tool_correct for t in perturbed_traces if t.expected_tool == tool_name],
-    )
-    return TRS(value=trs, p_value=p_value, significant=p_value &lt; 0.05)</code></pre>
+    _, p_value = stats.ttest_rel(baseline_scores, check_scores)
+    return RRS(value=rrs, p_value=p_value, significant=p_value &lt; 0.05)</code></pre>
             </div>
           </div>
 
@@ -384,16 +395,18 @@
           <div class="page-card">
             <h3>At a Glance</h3>
             <ul>
-              <li><strong>Stack:</strong> Python, scipy, shapiq, pandas</li>
-              <li><strong>Models tested:</strong> GPT-4, Claude 3.5 Sonnet, Llama-3 70B</li>
+              <li><strong>Stack:</strong> Python, NumPy, SciPy</li>
+              <li><strong>Pipeline:</strong> 4-step bidirectional regression detection</li>
               <li><strong>Benchmark:</strong> 48 tasks across 4 categories</li>
-              <li><strong>Metrics:</strong> 7 quantitative + 3 LLM-as-judge dimensions</li>
+              <li><strong>Metrics:</strong> 7 quantitative + 4 LLM-as-judge dimensions</li>
+              <li><strong>Code:</strong> <a href="https://github.com/richardanarfi/tooleval">github.com/richardanarfi/tooleval</a></li>
             </ul>
           </div>
           <div class="page-card">
             <h3>What This Demonstrates</h3>
             <ul>
               <li>Evaluation framework design with statistical rigor</li>
+              <li>Bidirectional regression analysis (reverse + forward)</li>
               <li>Interaction analysis using game-theoretic methods (Shapley values)</li>
               <li>Failure taxonomy design for actionable debugging</li>
               <li>LLM-as-judge methodology with separated dimensions</li>

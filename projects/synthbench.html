@@ -113,13 +113,13 @@
   "seed_id": "seed_003",
   "category": "retrieval",
   "difficulty": "medium",
-  "query": "Find the current CEO of Anthropic and their educational background",
+  "query": "Find the discovery year of penicillin and the scientist who discovered it",
   "expected_tools": [
-    {"tool": "web_search", "params": {"query": "Anthropic CEO"}}
+    {"tool": "web_search", "params": {"query": "penicillin discovery year scientist"}}
   ],
-  "gold_answer": "Dario Amodei, PhD in Computational Neuroscience from Princeton",
-  "reasoning_trace": "Single retrieval task requiring entity extraction from search results",
-  "domain_tags": ["company_info", "person_lookup"],
+  "gold_answer": "Alexander Fleming discovered penicillin in 1928",
+  "reasoning_trace": "Single retrieval task requiring entity and date extraction from search results",
+  "domain_tags": ["science", "historical_fact"],
   "distractor_tools": ["database_query", "calculator"]
 }</code></pre>
             </div>
@@ -136,12 +136,12 @@
               prompting with the seed as an example, plus 2-3 other seeds for diversity.
             </p>
             <ul>
-              <li><strong>Paraphrase:</strong> Same task, different wording. "Find the CEO of Anthropic" becomes
-                "Who leads Anthropic as chief executive?" Tests whether the agent is robust to surface variation.</li>
-              <li><strong>Analogize:</strong> Same structure, different domain. A CEO lookup becomes a CTO lookup
-                for a different company. Tests whether the agent generalizes the pattern.</li>
+              <li><strong>Paraphrase:</strong> Same task, different wording. "Find the discovery year of penicillin" becomes
+                "When was penicillin first discovered?" Tests whether the agent is robust to surface variation.</li>
+              <li><strong>Analogize:</strong> Same structure, different domain. A penicillin lookup becomes a discovery query
+                for a different scientific breakthrough. Tests whether the agent generalizes the pattern.</li>
               <li><strong>Compose:</strong> Combine two seed tasks into a multi-step task. A retrieval seed + a
-                calculation seed becomes "Find Anthropic's founding year and calculate how many years ago that was."</li>
+                calculation seed becomes "Find the year penicillin was discovered and calculate how many years ago that was."</li>
             </ul>
 
             <h4 style="margin-top:20px;">Quality Filter</h4>

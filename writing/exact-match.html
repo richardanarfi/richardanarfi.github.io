@@ -42,7 +42,7 @@
 <p>Exact match is the simplest evaluation metric: does the model's output exactly equal the expected answer? It's deterministic, cheap to compute, and easy to explain. For tasks with a single correct answer (what is 2+2?), it works perfectly. The problem is that most interesting LLM tasks don't have a single correct answer.</p>
 
 <h2>Where it breaks down</h2>
-<p>Consider a simple question: "Who is the CEO of Anthropic?" The golden answer in your test set says "Dario Amodei." The model outputs "Dario Amodei is the CEO of Anthropic." Exact match: fail. The model gave a correct, complete answer, but because it included extra context, it gets zero credit.</p>
+<p>Consider a simple question: "Who discovered penicillin?" The golden answer in your test set says "Alexander Fleming." The model outputs "Alexander Fleming discovered penicillin in 1928." Exact match: fail. The model gave a correct, complete answer, but because it included extra context, it gets zero credit.</p>
 
 <p>This isn't a contrived example. It happens constantly in production evaluation. A model generates a SQL query that returns the same rows but uses a column alias instead of the raw column name. A model writes a summary that covers all the key points but reorders them. A model answers a math problem correctly but shows its work in a different format. In all these cases, exact match says "wrong" when the output is correct.</p>
 
