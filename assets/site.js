@@ -113,10 +113,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const typedEl = document.querySelector('.hero-typed');
   if (typedEl) {
     const phrases = [
+      'reliable LLM systems.',
+      'behavioral model maps.',
       'evaluation frameworks.',
-      'synthetic benchmarks.',
-      'agent workflows.',
-      'reliable systems.'
+      'agent workflows.'
     ];
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReduced) {

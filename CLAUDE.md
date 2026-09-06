@@ -13,7 +13,7 @@ Open `index.html` directly in a browser or use any local static server. There is
 ## Architecture
 
 - **`index.html`** — Single-page homepage with sections: hero (typing effect), projects, writing, about. Anchor links for navigation.
-- **`projects/*.html`** — Three project showcase pages: ToolEval (agenteval.html), SynthEval (synthbench.html), PromptLab (researchflow.html). Each has architecture diagrams, tabbed content sections, code snippets, result cards, and expandable lessons.
+- **`projects/*.html`** — Five project showcase pages: Model Atlas (model-atlas.html), ToolEval (agenteval.html), SynthEval (synthbench.html), PromptLab (researchflow.html), and GRPO Arithmetic (grpo-speedrun.html). Model Atlas presents the study design, findings, and limitations; the other pages use architecture diagrams, tabs, code snippets, result cards, and expandable lessons.
 - **`writing/*.html`** — Two technical essay pages.
 - **`assets/styles.css`** — All styling. CSS custom properties in `:root` (light) and `[data-theme="dark"]` (dark mode). Responsive breakpoint at 940px. Includes component styles for tabs, expandables, architecture diagrams, code blocks with labels, result cards, and scroll-reveal animations.
 - **`assets/site.js`** — All interactivity (~150 lines): dark mode toggle (localStorage-persisted), scroll progress bar, IntersectionObserver-based reveal animations, tab component, expandable sections, hero typing effect. Respects `prefers-reduced-motion`.
