@@ -92,6 +92,47 @@
         <div class="project-stack">
           <article class="project-card reveal">
             <div class="project-copy">
+              <span class="project-tag">Behavioral model evaluation</span>
+              <h3>Model Atlas</h3>
+              <p>
+                An independent research prototype measuring shared model errors across judging
+                and generation. Builds task-specific behavioral graphs and evaluates recovery
+                choices on held-out examples. The initial pilot is inconclusive about
+                judging-to-generation transfer.
+              </p>
+              <ul>
+                <li>Eight-model study with 3,552 scored evaluations via OpenRouter</li>
+                <li>Source-level uncertainty and held-out comparisons beyond average scores</li>
+                <li>Interactive, read-only demo with explicit limitations and reproducible analysis</li>
+              </ul>
+              <a class="text-link" href="https://richardanarfi.github.io/model-atlas/">Live demo &rarr;</a>
+              <a class="text-link" href="https://github.com/richardanarfi/model-atlas" style="margin-left:16px;">Code &amp; research &rarr;</a>
+            </div>
+            <div class="project-visual card-visual">
+              <div class="cv-pipeline">
+                <span class="cv-node">Collect</span>
+                <span class="cv-arrow">&rarr;</span>
+                <span class="cv-node">Score</span>
+                <span class="cv-arrow">&rarr;</span>
+                <span class="cv-node">Compare</span>
+                <span class="cv-arrow">&rarr;</span>
+                <span class="cv-node">Report</span>
+              </div>
+              <div class="cv-code">
+                <span class="cm"># compare on held-out examples</span><br>
+                report = <span class="fn">analyze_study</span>(study)<br>
+                <span class="cm"># report uncertainty, not just rankings</span>
+              </div>
+              <div class="cv-metrics">
+                <div class="cv-metric"><div class="cv-metric-val">8</div><div class="cv-metric-label">Models</div></div>
+                <div class="cv-metric"><div class="cv-metric-val">3,552</div><div class="cv-metric-label">Evaluations</div></div>
+                <div class="cv-metric"><div class="cv-metric-val">420</div><div class="cv-metric-label">Main examples</div></div>
+              </div>
+            </div>
+          </article>
+
+          <article class="project-card reveal">
+            <div class="project-copy">
               <span class="project-tag">Tool call evaluation framework</span>
               <h3>ToolEval</h3>
               <p>
