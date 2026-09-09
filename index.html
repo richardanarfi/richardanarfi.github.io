@@ -4,10 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Richard Anarfi | Model Behavior, LLM Evaluation, and Agent Reliability</title>
-  <meta name="description" content="Richard Anarfi studies model behavior and builds evaluation-first LLM systems. Explore Model Atlas, an eight-model study of shared failures beyond leaderboard scores." />
+  <meta name="description" content="Richard Anarfi builds evaluation-first LLM systems. Explore CorpusLab for synthetic evidence and retrieval evaluation, and Model Atlas for behavioral model research." />
   <link rel="canonical" href="https://richardanarfi.github.io/" />
   <meta property="og:title" content="Richard Anarfi | Model Behavior, LLM Evaluation, and Agent Reliability" />
-  <meta property="og:description" content="Research and engineering on model behavior, evaluation, and reliable agents. Featuring Model Atlas, an eight-model study of shared failures." />
+  <meta property="og:description" content="Research and engineering on model behavior, label quality, and reliable agents. Explore the CorpusLab and Model Atlas interactive research workbenches." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://richardanarfi.github.io/" />
   <meta name="twitter:card" content="summary" />
@@ -38,11 +38,12 @@
           <h1>Understanding models.<br />Building <span class="hero-typed">reliable LLM systems.</span></h1>
           <p class="lead">
             I study how language models behave and fail, and build evaluation systems for reliable agents.
-            My project <a href="projects/model-atlas.html">Model Atlas</a> tests whether shared judging errors
-            predict shared generation failures &mdash; and add information beyond leaderboard scores.
+            <a href="projects/corpuslab.html">CorpusLab</a> explores synthetic evidence, label quality, and
+            retrieval evaluation. <a href="projects/model-atlas.html">Model Atlas</a> investigates shared
+            model failures beyond leaderboard scores.
           </p>
           <div class="hero-actions">
-            <a class="button button-primary" href="projects/model-atlas.html">Explore Model Atlas</a>
+            <a class="button button-primary" href="projects/corpuslab.html">Explore CorpusLab</a>
             <a class="button" href="#projects">View all projects</a>
             <a class="button" href="resume.pdf">Download resume</a>
           </div>
@@ -77,7 +78,7 @@
           <div class="hero-panel-card soft reveal reveal-delay-1">
             <h2>Areas</h2>
             <ol class="small-list">
-              <li>LLM evaluation and benchmarking</li>
+              <li>LLM evaluation, benchmarking, and label quality</li>
               <li>Behavioral model analysis and selection</li>
               <li>Reinforcement learning for LLMs (GRPO, PPO)</li>
               <li>Synthetic data for complex workflows</li>
@@ -100,6 +101,48 @@
         </div>
 
         <div class="project-stack">
+          <article class="project-card reveal">
+            <div class="project-copy">
+              <span class="project-tag">Synthetic evidence &amp; retrieval evaluation</span>
+              <h3>CorpusLab</h3>
+              <p>
+                A guided research workbench that turns query-first synthetic records into
+                auditable retrieval evaluation. Separates generation intent from relevance,
+                exposes judge disagreements, and measures retrieved evidence separately
+                from the final answer.
+              </p>
+              <ul>
+                <li>Fictional scenarios, a fixed clock, and three query categories</li>
+                <li>Isolated model votes, selective adjudication, and temporal-rubric exploration</li>
+                <li>Executable audit checks, browser-local review, and a controlled regression gate</li>
+              </ul>
+              <a class="text-link" href="projects/corpuslab.html">Research case study &rarr;</a><br />
+              <a class="text-link" href="https://richardanarfi.github.io/corpuslab/">Live demo &rarr;</a>
+              <a class="text-link" href="https://github.com/richardanarfi/corpuslab" style="margin-left:16px;">Code &amp; research &rarr;</a>
+            </div>
+            <div class="project-visual card-visual">
+              <div class="cv-pipeline">
+                <span class="cv-node">Questions</span>
+                <span class="cv-arrow">&rarr;</span>
+                <span class="cv-node">Evidence</span>
+                <span class="cv-arrow">&rarr;</span>
+                <span class="cv-node">Labels</span>
+                <span class="cv-arrow">&rarr;</span>
+                <span class="cv-node">Metrics</span>
+              </div>
+              <div class="cv-code">
+                <span class="cm"># evidence, not generator intent</span><br>
+                metrics = <span class="fn">retrieval_metrics</span>(returned, relevant)<br>
+                <span class="cm"># inspect retrieval before the answer</span>
+              </div>
+              <div class="cv-metrics">
+                <div class="cv-metric"><div class="cv-metric-val">Query-first</div><div class="cv-metric-label">Coverage</div></div>
+                <div class="cv-metric"><div class="cv-metric-val">Blinded</div><div class="cv-metric-label">Judging</div></div>
+                <div class="cv-metric"><div class="cv-metric-val">Two loops</div><div class="cv-metric-label">Evaluation</div></div>
+              </div>
+            </div>
+          </article>
+
           <article class="project-card reveal">
             <div class="project-copy">
               <span class="project-tag">Behavioral model evaluation</span>
@@ -321,6 +364,7 @@
           <span class="section-kicker">Writing</span>
           <h2>Research &amp; writing</h2>
           <p>On model behavior, evaluation design, and failure analysis for LLM systems.</p>
+          <a class="text-link" href="projects/corpuslab.html">CorpusLab: from synthetic evidence to evaluation &rarr;</a><br />
           <a class="text-link" href="projects/model-atlas.html#findings">Research case study: what Model Atlas found &rarr;</a>
         </div>
 
@@ -362,11 +406,11 @@
           <div class="info-card reveal reveal-delay-1">
             <h3>What I care about</h3>
             <p>
-              I'm interested in what average scores hide: shared blind spots, differences across tasks,
-              and whether one kind of evaluation predicts another. <a href="projects/model-atlas.html">Model Atlas</a>
-              puts those questions to the test. Across model analysis, agent evaluation, and reinforcement
-              learning, I value clear baselines, held-out evidence, and transparent limitations &mdash;
-              not just higher numbers.
+              I'm interested in what makes an evaluation trustworthy: deliberate coverage, clear decision
+              rules, and evidence that can be inspected. <a href="projects/corpuslab.html">CorpusLab</a>
+              explores label and retrieval quality; <a href="projects/model-atlas.html">Model Atlas</a>
+              studies shared model failures. Across this work, I value clear baselines, held-out evidence,
+              and transparent limitations &mdash; not just higher numbers.
             </p>
           </div>
         </div>

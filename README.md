@@ -5,22 +5,29 @@ synthetic data, reinforcement learning, and agent reliability.
 
 Live site: <https://richardanarfi.github.io/>.
 
-## Model Atlas
+## Interactive research workbenches
 
-The homepage introduces Model Atlas alongside ToolEval, SynthEval, PromptLab,
-and GRPO Arithmetic. Its [research case study](projects/model-atlas.html)
-explains the question, study design, inconclusive pilot findings, and limitations.
+The homepage introduces CorpusLab and Model Atlas alongside ToolEval, SynthEval,
+PromptLab, and GRPO Arithmetic.
 
-The [interactive dashboard](https://richardanarfi.github.io/model-atlas/) is
-deployed separately from the [Model Atlas repository](https://github.com/richardanarfi/model-atlas).
-This portfolio contains the narrative case study, not the model-collection
-pipeline or dashboard reports. Both sites serve static content; browsing them
+[CorpusLab](projects/corpuslab.html) presents query-first synthetic evidence,
+blinded relevance judging, rubric diagnosis, and retrieval/answer evaluation.
+Its [workbench](https://richardanarfi.github.io/corpuslab/) is deployed from
+the [CorpusLab repository](https://github.com/richardanarfi/corpuslab).
+
+[Model Atlas](projects/model-atlas.html) explains the behavioral graph question,
+study design, inconclusive pilot findings, and limitations. Its
+[dashboard](https://richardanarfi.github.io/model-atlas/) is deployed from
+the [Model Atlas repository](https://github.com/richardanarfi/model-atlas).
+
+This portfolio contains narrative case studies, not the model-collection
+pipelines. The workbenches serve static content and saved results; browsing them
 does not make model API calls.
 
 ## Structure
 
 - `index.html`: homepage, research focus, projects, writing, and background.
-- `projects/`: project case studies, including Model Atlas.
+- `projects/`: project case studies, including CorpusLab and Model Atlas.
 - `writing/`: technical essays.
 - `assets/`: shared styles, theme toggle, navigation, and animations.
 - `images/`: project graphics.
@@ -33,6 +40,7 @@ There is no build step, package manager, or dependency installation.
 GitHub Pages publishes the `main` branch from `/ (root)`.
 
 Keep shared navigation, footer, theme support, and reduced-motion behavior
-consistent across pages. When Model Atlas results change, update its case study
-and homepage summary against the research repository's published findings;
-retain uncertainty and the distinction between oracle recovery and production routing.
+consistent across pages. When recorded research results change, update the
+corresponding case study and homepage summary against the published findings.
+Retain uncertainty, synthetic-data and human-audit boundaries, and the
+distinction between controlled demonstrations and production outcomes.
